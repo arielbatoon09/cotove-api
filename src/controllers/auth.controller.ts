@@ -30,10 +30,14 @@ export class AuthController {
       if (error instanceof ZodError) {
         const errorResponse = ApiResponse.error("error", error.errors);
         res.status(400).json(errorResponse);
+
+        // Log if there's missing schema
         Logger.warn("[Authentication]: Failed to validate payload!");
       } else {
         const errorResponse = ApiResponse.error("Network Error: Something went wrong!");
         res.status(500).json(errorResponse);
+        
+        // Log if signup results server error
         Logger.error("[Authentication] Server network error!");
       }
     }
