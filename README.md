@@ -24,11 +24,12 @@ git clone https://github.com/your-repo/cotove-api.git
 cd cotove-api
 npm install
 
-
 ### 2️⃣ **Create PostgreSQL Database**
-- **[Download here](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads)**
+```sh
+**[Download here](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads)**
 
 ### 3️⃣ **Set Up Environment Variables**
+```sh
 PORT=
 BACKEND=
 DATABASE_URL=
@@ -37,9 +38,11 @@ JWT_REFRESH_SECRET=
 ALLOWED_ORIGINS=
 
 ### 4️⃣ **Prisma - Generate and Migrate DB**
+```sh
 npm run prisma:generate
 npm run prisma:migrate
 
 ### 5️⃣ **Start Development / Production Server**
+```sh
 npm run dev - For Development
 npm run build && npm start - For Production
