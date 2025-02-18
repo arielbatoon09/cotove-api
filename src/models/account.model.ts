@@ -1,9 +1,9 @@
 import { PrismaClient, Account } from '@prisma/client';
-import { IAccountInterface, ISignupInput } from '@/types/auth.types';
+import { IAccountRepository, ISignupInput } from '@/types/auth.types';
 
 const prisma = new PrismaClient();
 
-export class AccountModel implements IAccountInterface {
+export class AccountModel implements IAccountRepository {
   async findByEmail(email: string): Promise<Account | null> {
     return prisma.account.findUnique({
       where: { email },
@@ -14,7 +14,7 @@ export class AccountModel implements IAccountInterface {
     const account = await prisma.account.create({
       data: {
         ...data,
-        verified_at: null,
+        verifiedAt: null,
       },
       select: {
         id: true,
@@ -22,9 +22,9 @@ export class AccountModel implements IAccountInterface {
         email: true,
         phone: true,
         role: true,
-        verified_at: true,
-        created_at: true,
-        updated_at: true,
+        verifiedAt: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 

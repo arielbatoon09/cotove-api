@@ -13,3 +13,8 @@ export const SignupSchema = z.object({
   password: passwordSchema,
   phone: z.string().regex(/^63\d{10}$/, 'Invalid phone number format'),
 });
+
+export const LoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string(),
+});

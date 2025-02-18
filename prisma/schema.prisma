@@ -15,36 +15,36 @@ model Account {
   password     String
   phone        String
   role         String            @default("storeowner")
-  auth_token   AuthToken[]
-  otp_code     OTPCode[]
-  verified_at  DateTime?
-  created_at   DateTime          @default(now())
-  updated_at   DateTime          @updatedAt
+  AuthToken    AuthToken[]
+  OTPCode      OTPCode[]
+  verifiedAt   DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 }
 
 model AuthToken {
   id           String            @id @default(uuid())
-  account_id   String
+  accountId    String
   token        String            @unique
-  accounts     Account           @relation(fields: [account_id], references: [id], onDelete: Cascade)
-  expiresAt    String
-  created_at   DateTime          @default(now())
-  updated_at   DateTime          @updatedAt
+  accounts     Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  expiresAt    DateTime
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
-  @@index([account_id])
+  @@index([accountId])
   @@index([expiresAt])
 }
 
 model OTPCode {
   id           String            @id @default(uuid())
-  account_id   String
+  accountId   String
   code         String
-  accounts     Account           @relation(fields: [account_id], references: [id], onDelete: Cascade)
+  accounts     Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
   expires_at   DateTime
   isSuccess    Int               @default(0)
-  created_at   DateTime          @default(now())
-  updated_at   DateTime          @updatedAt
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
-  @@index([account_id])
+  @@index([accountId])
   @@index([expires_at])
 }
