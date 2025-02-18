@@ -9,7 +9,7 @@ datasource db {
 
 // Account Related Models
 model Account {
-  id           String            @id @default(uuid())
+  id           String            @id @default(uuid()) @unique
   fullname     String
   email        String            @unique
   password     String
@@ -17,13 +17,14 @@ model Account {
   role         String            @default("storeowner")
   AuthToken    AuthToken[]
   OTPCode      OTPCode[]
+  Store        Store[]
   verifiedAt   DateTime?
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
 }
 
 model AuthToken {
-  id           String            @id @default(uuid())
+  id           String            @id @default(uuid()) @unique
   accountId    String
   token        String            @unique
   accounts     Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
@@ -36,8 +37,8 @@ model AuthToken {
 }
 
 model OTPCode {
-  id           String            @id @default(uuid())
-  accountId   String
+  id           String            @id @default(uuid()) @unique
+  accountId    String
   code         String
   accounts     Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
   expires_at   DateTime
@@ -47,4 +48,22 @@ model OTPCode {
 
   @@index([accountId])
   @@index([expires_at])
+}
+
+// Store related models
+model Store {
+  id           String            @id @default(uuid()) @unique
+  accountId    String
+  account      Account           @relation(fields: [accountId], references: [id])
+  name         String
+  description  String
+  logo_url     String?
+  subdomain    String            @unique
+  domain       String            @unique
+  status       String            @default("active")
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([subdomain])
+  @@index([domain])
 }

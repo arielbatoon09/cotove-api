@@ -1,5 +1,6 @@
 import { AuthController } from "@/controllers/auth.controller";
 import { AuthLimiter } from "@/middleware/ratelimit.middleware";
+import { validateRequestBody } from "@/middleware/security.middleware";
 import { RouterConfig } from "@/types/route.types"
 
 export const AuthRoutes: RouterConfig = {
@@ -9,13 +10,13 @@ export const AuthRoutes: RouterConfig = {
       path: "/signup",
       method: "post",
       handler: AuthController.Signup,
-      middlewares: [AuthLimiter],
+      middlewares: [AuthLimiter, validateRequestBody],
     },
     {
       path: "/login",
       method: "post",
       handler: AuthController.Login,
-      middlewares: [AuthLimiter],
+      middlewares: [AuthLimiter, validateRequestBody],
     },
   ],
 };
