@@ -1,6 +1,6 @@
 # 🚀 COTOVE API (Backend)
 
-⚠️ **Note:** This API is still in development and **not yet finalized**. Contributions and feedback are welcome!
+⚠️ **Note:** This API is still in development and **not yet finalized**.
 
 ---
 
@@ -35,7 +35,7 @@ npm install
 ### 2️⃣ **Set Up PostgreSQL Database**
 
 ```sh
-1. Download and install PostgreSQL from the **[official website](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads)** .
+1. Download and install PostgreSQL v16/17.
 2. Create a new database for the project.
 ```
 
