@@ -14,6 +14,7 @@ export interface ILoginInput {
 
 export interface ITokenPayload {
   accountId: string;
+  role: string;
 }
 
 export interface IAuthTokens {

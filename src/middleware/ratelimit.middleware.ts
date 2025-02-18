@@ -19,7 +19,7 @@ export const GlobalLimiter = rateLimit({
 // Isolated for auth routes
 export const AuthLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
-  limit: 5,
+  limit: 100, // need to update lol for prod
   message: { 
     sucess: false,
     message: 'Too many authentication attempts, please try again later.',

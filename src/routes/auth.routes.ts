@@ -1,7 +1,7 @@
 import { AuthController } from "@/controllers/auth.controller";
 import { AuthLimiter } from "@/middleware/ratelimit.middleware";
 import { validateRequestBody } from "@/middleware/security.middleware";
-import { RouterConfig } from "@/types/route.types"
+import { RouterConfig } from "@/types/route.types";
 
 export const AuthRoutes: RouterConfig = {
   prefix: "/auth",
