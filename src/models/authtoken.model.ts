@@ -1,7 +1,6 @@
-import { PrismaClient, AuthToken } from "@prisma/client";
+import prisma from "@/lib/prisma";
+import { AuthToken } from "@prisma/client";
 import { IAuthTokenRepository } from "@/types/auth.types";
-
-const prisma = new PrismaClient();
 
 export class AuthTokenModel implements IAuthTokenRepository {
   async create(data: {

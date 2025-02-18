@@ -1,6 +1,5 @@
 import { AuthController } from "@/controllers/auth.controller";
 import { AuthLimiter } from "@/middleware/ratelimit.middleware";
-
 import { RouterConfig } from "@/types/route.types"
 
 export const AuthRoutes: RouterConfig = {

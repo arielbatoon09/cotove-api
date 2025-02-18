@@ -1,7 +1,6 @@
-import { PrismaClient, Account } from '@prisma/client';
+import prisma from '@/lib/prisma';
+import { Account } from '@prisma/client';
 import { IAccountRepository, ISignupInput } from '@/types/auth.types';
-
-const prisma = new PrismaClient();
 
 export class AccountModel implements IAccountRepository {
   async findByEmail(email: string): Promise<Account | null> {
