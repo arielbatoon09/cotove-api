@@ -1,23 +1,23 @@
 import { AuthTokenModel } from "@/models/authtoken.model";
-import { IRefreshToken } from "@/types/auth.types";
+import { IAuthTokens } from "@/types/auth.types";
 import { ApiResponse } from "@/utils/ApiResponse";
 import { ITokenPayload } from "@/types/auth.types";
 import { TokenService } from "@/services/auth/tokens.service";
 import jwt from "jsonwebtoken";
 
 export class RefreshTokenService {
-  public static async process(data: IRefreshToken): Promise<ApiResponse> {
+  public static async process(data: IAuthTokens): Promise<ApiResponse> {
     return this.processRefreshToken(data);
   }
   
   // Private function/s
-  private static async processRefreshToken(data: IRefreshToken): Promise<ApiResponse> {
+  private static async processRefreshToken(data: IAuthTokens): Promise<ApiResponse> {
     const token = new AuthTokenModel();
-    const decoded = jwt.verify(data.refreshToken, process.env.JWT_REFRESH_SECRET!) as ITokenPayload;
+    const decoded = jwt.verify(data.accessToken, process.env.JWT_ACCESS_SECRET!) as ITokenPayload;
 
     const storedToken = await token.findValidToken(
       decoded.accountId,
-      data.refreshToken
+      data.accessToken
     );
 
     if (!storedToken) {
@@ -27,11 +27,10 @@ export class RefreshTokenService {
     // Delete token
     await token.deleteToken(storedToken.id);
     await TokenService.cleanupTokens(decoded.accountId);
-    const { accessToken, refreshToken } = await TokenService.getTokens(decoded.accountId);
+    const { accessToken } = await TokenService.getTokens(decoded.accountId);
 
     return ApiResponse.success("Refresh token successfully", {
-      accessToken,
-      refreshToken
+      accessToken
     });
   }
 }

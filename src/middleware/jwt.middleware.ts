@@ -1,10 +1,9 @@
 import jwt from "jsonwebtoken";
 import logger from "@/utils/Logger";
-import prisma from "@/lib/prisma";
 import { Request, Response, NextFunction } from "express";
 import { ITokenPayload } from "@/types/auth.types";
 import { ApiResponse } from "@/utils/ApiResponse";
-import { AccountModel } from "@/models/account.model";
+import { AuthTokenModel } from "@/models/authtoken.model";
 
 declare global {
   namespace Express {
@@ -22,22 +21,29 @@ declare global {
 export const isAuthenticated = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
+    const token = new AuthTokenModel();
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json(ApiResponse.error( "Unauthorized: No token provided"));
     }
 
-    const token = authHeader.split(" ")[1];
+    const authToken = authHeader.split(" ")[1];
 
     if (!process.env.JWT_ACCESS_SECRET) {
-      logger.error("JWT secret is missing in environment variables");
+      logger.error("JWT secret is missing in environment variables.");
       return res.status(500).json(ApiResponse.error("Internal server error"));
     }
 
     let decodedToken: ITokenPayload;
 
     try {
-      decodedToken = jwt.verify(token, process.env.JWT_ACCESS_SECRET) as ITokenPayload;
+      // verify if the JWT token is valid
+      decodedToken = jwt.verify(authToken, process.env.JWT_ACCESS_SECRET) as ITokenPayload;
+      // Validate if the token is revoked - logouted
+      const storedToken = await token.findValidToken(decodedToken.accountId, authToken);
+      if (!storedToken) {
+        return res.status(401).json(ApiResponse.error("Unauthorized: Token not found or revoked"));
+      }
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
         return res.status(401).json(ApiResponse.error("Unauthorized: Token has expired"));

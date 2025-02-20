@@ -10,6 +10,7 @@ COTOVE API is built using modern, secure, and scalable technologies to ensure ro
 
 - **[Express.js](https://expressjs.com/)** - A fast and minimalist Node.js framework for building APIs.
 - **[PostgreSQL](https://www.postgresql.org/)** - A powerful, open-source relational database system.
+- **[Redis](https://redis.io/)** - Redis is an open-source, in-memory data store that can be used as a database, cache, or message broker.
 - **[Zod](https://zod.dev/)** - Type-safe schema validation for request bodies and parameters.
 - **[JSON Web Token (JWT)](https://jwt.io/)** - Secure authentication and authorization using tokens.
 - **[Prisma](https://www.prisma.io/)** - A next-generation ORM for TypeScript and Node.js with type-safe database access.

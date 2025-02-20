@@ -31,6 +31,14 @@ export class AuthTokenModel implements IAuthTokenRepository {
     });
   }
 
+  async removeTokens(accountId: string): Promise<void> {
+    await prisma.authToken.deleteMany({
+      where: {
+        accountId
+      }
+    })
+  }
+
   async removeExpiredTokens(accountId: string): Promise<void> {
     await prisma.authToken.deleteMany({
       where: {

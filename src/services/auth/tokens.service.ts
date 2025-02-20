@@ -3,7 +3,7 @@ import { ITokenPayload, IAuthTokens } from "@/types/auth.types";
 import jwt, { SignOptions } from 'jsonwebtoken';
 
 export class TokenService {
-  private static ACCESS_TOKEN_EXPIRY = 900; // 15 mins
+  private static ACCESS_TOKEN_EXPIRY = 86400;// 24 hours
   private static REFRESH_TOKEN_EXPIRY = 604800; // 7 days
   private static MAX_REFRESH_TOKENS_PER_USER = 5;
 
@@ -26,33 +26,22 @@ export class TokenService {
       jwtid: crypto.randomUUID(),
     };
 
-    const refreshTokenOptions: SignOptions = {
-      expiresIn: this.REFRESH_TOKEN_EXPIRY,
-      jwtid: crypto.randomUUID(),
-    };
-
     const accessToken = jwt.sign(
       { accountId } as ITokenPayload,
       process.env.JWT_ACCESS_SECRET!,
       accessTokenOptions
     );
 
-    const refreshToken = jwt.sign(
-      { accountId } as ITokenPayload,
-      process.env.JWT_REFRESH_SECRET!,
-      refreshTokenOptions
-    );
-
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
+    expiresAt.setSeconds(expiresAt.getSeconds() + this.ACCESS_TOKEN_EXPIRY);    
 
     await token.create({
-      token: refreshToken,
+      token: accessToken,
       accountId,
       expiresAt,
     });
 
-    return { accessToken, refreshToken };
+    return { accessToken };
   }
 
   private static async processCleanupTokens(accountId: string): Promise<void> {

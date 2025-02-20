@@ -19,11 +19,10 @@ export interface ITokenPayload {
 
 export interface IAuthTokens {
   accessToken: string;
-  refreshToken: string;
 }
 
-export interface IRefreshToken {
-  refreshToken: string;
+export interface IAccountId {
+  accountId: string;
 }
 
 // Repository Interfaces

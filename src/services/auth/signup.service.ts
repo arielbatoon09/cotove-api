@@ -31,14 +31,13 @@ export class SignupService {
       password: hashedPassword,
     });
 
-    const { accessToken, refreshToken } = await TokenService.getTokens(newAccount.id);
+    const { accessToken } = await TokenService.getTokens(newAccount.id);
 
     Logger.success(`[Authentication] This ${data.email} is newly created account.`);
 
     return ApiResponse.success("Signup successfully", {
       ...newAccount,
       accessToken,
-      refreshToken,
     }, 201);
   }
 }

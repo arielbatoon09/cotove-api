@@ -27,15 +27,14 @@ export class LoginService {
     // clean unused and expired tokens
     await TokenService.cleanupTokens(existingAccount.id);
 
-    const { accessToken, refreshToken } = await TokenService.getTokens(existingAccount.id);
+    const { accessToken } = await TokenService.getTokens(existingAccount.id);
 
     const { password: _, ...userWithoutPassword } = existingAccount;
 
     Logger.success(`[Authentication] ${data.email} is successfuly logged in.`)
     return ApiResponse.success("Login successfully", {
       ...userWithoutPassword,
-      accessToken,
-      refreshToken,
+      accessToken
     });
   }
 }

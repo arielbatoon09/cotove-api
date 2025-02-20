@@ -20,5 +20,9 @@ export const LoginSchema = z.object({
 });
 
 export const RefreshTokenSchema = z.object({
-  refreshToken: z.string(),
+  accessToken: z.string(),
+});
+
+export const LogoutSchema = z.object({
+  accountId: z.string(),
 });
