@@ -38,6 +38,8 @@ export interface IAuthTokenRepository {
     expiresAt: Date;
   }): Promise<AuthToken>;
   findValidToken(accountId: string, token: string): Promise<AuthToken | null>;
+  deleteToken(id: string): Promise<void>;
+  removeTokens(accountId: string): Promise<void>
   removeExpiredTokens(accountId: string): Promise<void>;
   countValidTokens(accountId: string): Promise<number>;
   deleteOldestTokens(accountId: string, count: number): Promise<void>;
