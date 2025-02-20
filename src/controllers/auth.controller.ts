@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { ILoginInput, ISignupInput, IAuthTokens, IAccountId } from "@/types/auth.types";
 import { LoginSchema, SignupSchema, RefreshTokenSchema, LogoutSchema } from "@/schema/auth.schema";
-import { AuthService } from "@/services/auth/auth.service";
+import { AuthService } from "@/services/auth";
 import { ApiResponse } from "@/utils/ApiResponse";
 import { ZodError } from "zod";
 import Logger from "@/utils/Logger";
