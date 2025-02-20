@@ -21,7 +21,7 @@ export class RefreshTokenService {
     );
 
     if (!storedToken) {
-      return ApiResponse.error("Invalid refresh token", null, 401);
+      return ApiResponse.error("Unauthorized: Invalid access token", null, 401);
     }
 
     // Delete token

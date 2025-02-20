@@ -4,7 +4,6 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 
 export class TokenService {
   private static ACCESS_TOKEN_EXPIRY = 86400;// 24 hours
-  private static REFRESH_TOKEN_EXPIRY = 604800; // 7 days
   private static MAX_REFRESH_TOKENS_PER_USER = 5;
 
   private constructor() {}
@@ -55,6 +54,5 @@ export class TokenService {
         tokenCount - this.MAX_REFRESH_TOKENS_PER_USER,
       );
     }
-
   }
 }
