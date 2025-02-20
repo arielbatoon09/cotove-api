@@ -13,6 +13,24 @@ export class AuthTokenModel implements IAuthTokenRepository {
     });
   }
 
+  async findValidToken(accountId: string, token: string): Promise<AuthToken | null> {
+    return prisma.authToken.findFirst({
+      where: {
+        accountId,
+        token,
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
+    });
+  }
+
+  async deleteToken(id: string): Promise<void> {
+    await prisma.authToken.delete({
+      where: { id },
+    });
+  }
+
   async removeExpiredTokens(accountId: string): Promise<void> {
     await prisma.authToken.deleteMany({
       where: {

@@ -1,6 +1,7 @@
 import { SignupService } from "@/services/auth/signup.service";
 import { LoginService } from "./login.service";
-import { ISignupInput, ILoginInput } from "@/types/auth.types";
+import { RefreshTokenService } from "./refreshtoken.service";
+import { ISignupInput, ILoginInput, IRefreshToken } from "@/types/auth.types";
 import { ApiResponse } from "@/utils/ApiResponse";
 
 export class AuthService {
@@ -9,5 +10,8 @@ export class AuthService {
   }
   static async Login(data: ILoginInput): Promise<ApiResponse> {
     return await LoginService.process(data);
+  }
+  static async Refresh(data: IRefreshToken): Promise<ApiResponse> {
+    return await RefreshTokenService.process(data);
   }
 }

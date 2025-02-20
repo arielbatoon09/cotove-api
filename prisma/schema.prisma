@@ -41,13 +41,13 @@ model OTPCode {
   accountId    String
   code         String
   accounts     Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  expires_at   DateTime
+  expiresAt   DateTime
   isSuccess    Int               @default(0)
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
 
   @@index([accountId])
-  @@index([expires_at])
+  @@index([expiresAt])
 }
 
 // Store related models

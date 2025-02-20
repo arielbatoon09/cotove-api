@@ -1,6 +1,6 @@
-import prisma from '@/lib/prisma';
-import { Account } from '@prisma/client';
-import { IAccountRepository, ISignupInput } from '@/types/auth.types';
+import prisma from "@/lib/prisma";
+import { Account } from "@prisma/client";
+import { IAccountRepository, ISignupInput } from "@/types/auth.types";
 
 export class AccountModel implements IAccountRepository {
   async findByEmail(email: string): Promise<Account | null> {
@@ -9,7 +9,7 @@ export class AccountModel implements IAccountRepository {
     });
   }
 
-  async create(data: ISignupInput): Promise<Omit<Account, 'password'>> {
+  async create(data: ISignupInput): Promise<Omit<Account, "password">> {
     const account = await prisma.account.create({
       data: {
         ...data,

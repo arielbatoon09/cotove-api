@@ -9,18 +9,19 @@ export class LoginService {
   public static async process(data: ILoginInput): Promise<ApiResponse> {
     return this.processLogin(data);
   }
-
+  
+  // Private function/s
   private static async processLogin(data: ILoginInput): Promise<ApiResponse> {
     const account = new AccountModel();
     const existingAccount = await account.findByEmail(data.email);
 
     if (!existingAccount) {
-      return ApiResponse.error("Invalid credentials");
+      return ApiResponse.error("Invalid credentials", null, 401);
     }
 
     const isValidPassword = await bcrypt.compare(data.password, existingAccount.password);
     if (!isValidPassword) {
-      return ApiResponse.error("Invalid credentials");
+      return ApiResponse.error("Invalid credentials", null, 401);
     }
 
     // clean unused and expired tokens
@@ -32,11 +33,9 @@ export class LoginService {
 
     Logger.success(`[Authentication] ${data.email} is successfuly logged in.`)
     return ApiResponse.success("Login successfully", {
-      account: {
-        ...userWithoutPassword, 
-        accessToken,
-        refreshToken,
-      },
+      ...userWithoutPassword,
+      accessToken,
+      refreshToken,
     });
   }
 }

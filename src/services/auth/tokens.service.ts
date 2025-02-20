@@ -17,6 +17,7 @@ export class TokenService {
     return this.processCleanupTokens(accountId);
   }
 
+  // Private function/s
   private static async generateTokens(accountId: string): Promise<IAuthTokens> {
     const token = new AuthTokenModel();
 

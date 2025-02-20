@@ -18,5 +18,11 @@ export const AuthRoutes: RouterConfig = {
       handler: AuthController.Login,
       middlewares: [AuthLimiter, validateRequestBody],
     },
+    {
+      path: "/refresh",
+      method: "post",
+      handler: AuthController.RefreshToken,
+      middlewares: [AuthLimiter, validateRequestBody],
+    },
   ],
 };

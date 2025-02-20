@@ -22,8 +22,13 @@ export interface IAuthTokens {
   refreshToken: string;
 }
 
+export interface IRefreshToken {
+  refreshToken: string;
+}
+
 // Repository Interfaces
 export interface IAccountRepository {
+  findByEmail(email: string): Promise<Account | null>;
   create(data: ISignupInput): Promise<Omit<Account, 'password'>>;
 }
 
@@ -33,4 +38,8 @@ export interface IAuthTokenRepository {
     accountId: string;
     expiresAt: Date;
   }): Promise<AuthToken>;
+  findValidToken(accountId: string, token: string): Promise<AuthToken | null>;
+  removeExpiredTokens(accountId: string): Promise<void>;
+  countValidTokens(accountId: string): Promise<number>;
+  deleteOldestTokens(accountId: string, count: number): Promise<void>;
 }
