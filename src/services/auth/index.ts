@@ -1,7 +1,7 @@
 import { SignupService } from "@/services/auth/signup.service";
 import { LoginService } from "@/services/auth/login.service";
 import { RefreshTokenService } from "@/services/auth/refreshtoken.service";
-import { OTPService } from "@/services/auth/otpcode.service";
+import { OTP } from "@/services/auth/otp.service";
 import { ISignupInput, ILoginInput, IAuthTokens, IAccountId, IVerifyOTP } from "@/types/auth.types";
 import { ApiResponse } from "@/utils/ApiResponse";
 import { LogoutService } from "@/services/auth/logout.service";
@@ -17,7 +17,10 @@ export class AuthService {
     return await RefreshTokenService.process(data);
   }
   static async VerifyOTP(data: IVerifyOTP): Promise<ApiResponse> {
-    return OTPService.email(data);
+    return OTP.email(data);
+  }
+  static async ResendOTP(data: IAccountId): Promise<ApiResponse> {
+    return OTP.resend(data);
   }
   static async Logout(data: IAccountId): Promise<ApiResponse> {
     return await LogoutService.process(data);

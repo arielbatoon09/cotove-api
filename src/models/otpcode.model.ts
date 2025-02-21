@@ -40,4 +40,34 @@ export class OTPCodeModel implements IOtpCodeRepository {
       },
     });
   }
+
+  async countValidOTP(accountId: string): Promise<number> {
+    return prisma.otpCode.count({
+      where: {
+        accountId,
+        isSuccess: 0,
+        expiresAt: {
+          gt: new Date(),
+        }
+      }
+    })
+  }
+
+  async countAllOTP(accountId: string): Promise<number> {
+    return prisma.otpCode.count({
+      where: {
+        accountId,
+        isSuccess: 0,
+      }
+    })
+  }
+
+  async deleteUnverifiedOTPs(accountId: string): Promise<void> {
+    await prisma.otpCode.deleteMany({
+      where: {
+        accountId,
+        isSuccess: 0,
+      }
+    })
+  }
 }

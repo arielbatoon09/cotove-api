@@ -4,7 +4,7 @@ import { AccountModel } from "@/models/account.model";
 import { ISignupInput } from "@/types/auth.types";
 import { ApiResponse } from "@/utils/ApiResponse";
 import { TokenService } from "@/services/auth/tokens.service";
-import { OTPService } from "./otpcode.service";
+import { OTP } from "./otp.service";
 
 export class SignupService {
   public static async create(data: ISignupInput): Promise<ApiResponse> {
@@ -33,8 +33,9 @@ export class SignupService {
     });
 
     // Generate OTP and Store it
-    const otp = OTPService.generate(newAccount.id);
-    if (!otp) {
+    const otp = await OTP.generate(newAccount.id);
+    const otpCode = otp?.code;
+    if (!otp || otp === null) {
       return ApiResponse.error("Failed to generate OTP code.", null, 400);
     }
 
@@ -45,6 +46,7 @@ export class SignupService {
     return ApiResponse.success("Signup successfully", {
       ...newAccount,
       accessToken,
+      otpCode
     }, 201);
   }
 }

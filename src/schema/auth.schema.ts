@@ -32,6 +32,10 @@ export const OTPSchema = z.object({
     })
 });
 
+export const ResendOTPSchema = z.object({
+  accountId: z.string(),
+})
+
 export const LogoutSchema = z.object({
   accountId: z.string(),
 });

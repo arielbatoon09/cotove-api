@@ -32,6 +32,12 @@ export const AuthRoutes: RouterConfig = {
       middlewares: [AuthLimiter, validateRequestBody, isAuthenticated],
     },
     {
+      path: "/resend-otp",
+      method: "post",
+      handler: AuthController.ResendOTP,
+      middlewares: [AuthLimiter, validateRequestBody, isAuthenticated],
+    },
+    {
       path: "/logout",
       method: "post",
       handler: AuthController.Logout,

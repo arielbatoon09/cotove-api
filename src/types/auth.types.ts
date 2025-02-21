@@ -60,4 +60,7 @@ export interface IOtpCodeRepository {
   }): Promise<OtpCode>;
   findValidOTP(accountId: string): Promise<OtpCode | null>;
   markOTPAsSuccess(otpId: string): Promise<OtpCode>;
+  countValidOTP(accountId: string): Promise<Number>;
+  countAllOTP(accountId: string): Promise<number>;
+  deleteUnverifiedOTPs(accountId: string): Promise<void>;
 }
