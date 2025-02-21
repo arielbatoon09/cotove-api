@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { ILoginInput, ISignupInput, IAuthTokens, IAccountId } from "@/types/auth.types";
-import { LoginSchema, SignupSchema, RefreshTokenSchema, LogoutSchema } from "@/schema/auth.schema";
+import { ILoginInput, ISignupInput, IAuthTokens, IAccountId, IVerifyOTP } from "@/types/auth.types";
+import { LoginSchema, SignupSchema, RefreshTokenSchema, LogoutSchema, OTPSchema } from "@/schema/auth.schema";
 import { AuthService } from "@/services/auth";
 import { ApiResponse } from "@/utils/ApiResponse";
 import { ZodError } from "zod";
@@ -29,7 +29,7 @@ export class AuthController {
     }
   }
 
-  public static async Login(req: Request, res:Response): Promise<void> {
+  public static async Login(req: Request, res: Response): Promise<void> {
     try {
       const data: ILoginInput = LoginSchema.parse(req.body);
       const result = await AuthService.Login(data);
@@ -44,12 +44,35 @@ export class AuthController {
     }
   }
 
-  public static async RefreshToken(req: Request, res:Response): Promise<void> {
+  public static async RefreshToken(req: Request, res: Response): Promise<void> {
     try {
       const data: IAuthTokens = RefreshTokenSchema.parse(req.body);
       const result = await AuthService.Refresh(data);
       res.status(result.status).json(result);
 
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const errorResponse = ApiResponse.error("validationError", error.errors);
+        res.status(400).json(errorResponse);
+
+        // Log if there's missing schema
+        Logger.warn("[Authentication]: Failed to validate payload!");
+      } else {
+        const errorResponse = ApiResponse.error("Network Error: Something went wrong!", null, 500);
+        res.status(errorResponse.status).json(errorResponse);
+        
+        // Log if signup results server error
+        Logger.error("[Authentication] Server network error!");
+      }
+    }
+  }
+
+  public static async VerifyOTP(req: Request, res: Response): Promise <void> {
+    try {
+      const data: IVerifyOTP = OTPSchema.parse(req.body);
+      const result = await AuthService.VerifyOTP(data);
+      res.status(result.status).json(result);
+      
     } catch (error) {
       if (error instanceof ZodError) {
         const errorResponse = ApiResponse.error("validationError", error.errors);

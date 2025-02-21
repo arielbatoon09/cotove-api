@@ -26,13 +26,13 @@
     "prisma:pull": "npx prisma db pull"
   },
   "devDependencies": {
-    "@prisma/client": "^6.4.0",
+    "@prisma/client": "^6.4.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/hpp": "^0.2.6",
     "@types/node": "^22.13.1",
-    "prisma": "^6.4.0",
+    "prisma": "^6.4.1",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "tsconfig-paths": "^4.2.0",

@@ -23,6 +23,15 @@ export const RefreshTokenSchema = z.object({
   accessToken: z.string(),
 });
 
+export const OTPSchema = z.object({
+  accountId: z.string(),
+  code: z
+    .number()
+    .refine(val => val >= 100000 && val <= 999999, {
+      message: "OTP Code must be a 6-digit number"
+    })
+});
+
 export const LogoutSchema = z.object({
   accountId: z.string(),
 });

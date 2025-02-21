@@ -26,10 +26,16 @@ export const AuthRoutes: RouterConfig = {
       middlewares: [AuthLimiter, validateRequestBody],
     },
     {
+      path: "/verify-otp",
+      method: "post",
+      handler: AuthController.VerifyOTP,
+      middlewares: [AuthLimiter, validateRequestBody, isAuthenticated],
+    },
+    {
       path: "/logout",
       method: "post",
       handler: AuthController.Logout,
-      middlewares: [AuthLimiter, validateRequestBody],
+      middlewares: [AuthLimiter, validateRequestBody, isAuthenticated],
     },
     {
       path: "/test",

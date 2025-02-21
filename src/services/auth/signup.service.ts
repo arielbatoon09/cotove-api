@@ -4,6 +4,7 @@ import { AccountModel } from "@/models/account.model";
 import { ISignupInput } from "@/types/auth.types";
 import { ApiResponse } from "@/utils/ApiResponse";
 import { TokenService } from "@/services/auth/tokens.service";
+import { OTPService } from "./otpcode.service";
 
 export class SignupService {
   public static async create(data: ISignupInput): Promise<ApiResponse> {
@@ -21,7 +22,7 @@ export class SignupService {
     const emailTaken = await this.isEmailTaken(data.email);
     if (emailTaken) {
       Logger.error(`[Authentication] ${data.fullname} is trying to sign up with an existing email.`);
-      return ApiResponse.error("Email already exists", null, 409);
+      return ApiResponse.error("Email already exists.", null, 409);
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 12);
@@ -30,6 +31,12 @@ export class SignupService {
       ...data,
       password: hashedPassword,
     });
+
+    // Generate OTP and Store it
+    const otp = OTPService.generate(newAccount.id);
+    if (!otp) {
+      return ApiResponse.error("Failed to generate OTP code.", null, 400);
+    }
 
     const { accessToken } = await TokenService.getTokens(newAccount.id);
 

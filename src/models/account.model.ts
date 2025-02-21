@@ -3,12 +3,6 @@ import { Account } from "@prisma/client";
 import { IAccountRepository, ISignupInput } from "@/types/auth.types";
 
 export class AccountModel implements IAccountRepository {
-  async findByEmail(email: string): Promise<Account | null> {
-    return prisma.account.findUnique({
-      where: { email },
-    });
-  }
-
   async create(data: ISignupInput): Promise<Omit<Account, "password">> {
     const account = await prisma.account.create({
       data: {
@@ -28,5 +22,26 @@ export class AccountModel implements IAccountRepository {
     });
 
     return account;
+  }
+
+  async findByEmail(email: string): Promise<Account | null> {
+    return prisma.account.findUnique({
+      where: { email },
+    });
+  }
+
+  async findById(id: string): Promise<Account | null> {
+    return prisma.account.findUnique({
+      where: { id },
+    });
+  }
+
+  async updateVerifiedAt(id: string): Promise<Account> {
+    return prisma.account.update({
+      where: { id: id },
+      data: {
+        verifiedAt: new Date(),
+      },
+    });
   }
 }

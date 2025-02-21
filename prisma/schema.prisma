@@ -16,7 +16,7 @@ model Account {
   phone        String
   role         String            @default("storeowner")
   AuthToken    AuthToken[]
-  OTPCode      OTPCode[]
+  OtpCode      OtpCode[]
   Store        Store[]
   verifiedAt   DateTime?
   createdAt    DateTime          @default(now())
@@ -36,12 +36,12 @@ model AuthToken {
   @@index([expiresAt])
 }
 
-model OTPCode {
+model OtpCode {
   id           String            @id @default(uuid()) @unique
   accountId    String
-  code         String
+  code         Int
   accounts     Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  expiresAt   DateTime
+  expiresAt    DateTime
   isSuccess    Int               @default(0)
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt

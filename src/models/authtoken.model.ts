@@ -9,7 +9,11 @@ export class AuthTokenModel implements IAuthTokenRepository {
     expiresAt: Date;
   }): Promise<AuthToken> {
     return prisma.authToken.create({
-      data,
+      data: {
+        token: data.token,
+        accountId: data.accountId,
+        expiresAt: data.expiresAt,
+      }
     });
   }
 

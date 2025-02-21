@@ -1,4 +1,4 @@
-import { Account, AuthToken } from "@prisma/client";
+import { Account, AuthToken, OtpCode } from "@prisma/client";
 
 export interface ISignupInput {
   fullname: string;
@@ -25,10 +25,17 @@ export interface IAccountId {
   accountId: string;
 }
 
+export interface IVerifyOTP {
+  accountId: string;
+  code: number;
+}
+
 // Repository Interfaces
 export interface IAccountRepository {
-  findByEmail(email: string): Promise<Account | null>;
   create(data: ISignupInput): Promise<Omit<Account, 'password'>>;
+  findByEmail(email: string): Promise<Account | null>;
+  findById(id: string): Promise<Account | null>;
+  updateVerifiedAt(id: string): Promise<Account>;
 }
 
 export interface IAuthTokenRepository {
@@ -43,4 +50,14 @@ export interface IAuthTokenRepository {
   removeExpiredTokens(accountId: string): Promise<void>;
   countValidTokens(accountId: string): Promise<number>;
   deleteOldestTokens(accountId: string, count: number): Promise<void>;
+}
+
+export interface IOtpCodeRepository {
+  create(data: {
+    accountId: string;
+    code: number;
+    expiresAt: Date;
+  }): Promise<OtpCode>;
+  findValidOTP(accountId: string): Promise<OtpCode | null>;
+  markOTPAsSuccess(otpId: string): Promise<OtpCode>;
 }
