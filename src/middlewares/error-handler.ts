@@ -3,6 +3,7 @@ import { ApiError } from '../utils/api-error';
 import { logger } from '../config/logger';
 import status from 'http-status';
 import { v4 as uuidv4 } from 'uuid';
+import { ZodError } from 'zod';
 
 // Extend Express Request type to include id
 declare global {
@@ -55,11 +56,46 @@ export const errorHandler = (
     return;
   }
   
+  // Handle Zod validation errors
+  if (err instanceof ZodError) {
+    res.status(status.BAD_REQUEST).json({
+      status: 'error',
+      message: 'Validation error',
+      errors: err.errors.map(error => ({
+        field: error.path.join('.'),
+        message: error.message
+      })),
+      requestId
+    });
+    return;
+  }
+  
   // Handle validation errors
   if (err.name === 'ValidationError') {
     res.status(status.BAD_REQUEST).json({
       status: 'error',
       message: err.message,
+      requestId
+    });
+    return;
+  }
+  
+  // Handle database errors
+  if (err.name === 'PostgresError' || err.name === 'DatabaseError') {
+    // Check for unique constraint violations
+    if (err.message.includes('duplicate key')) {
+      res.status(status.CONFLICT).json({
+        status: 'error',
+        message: 'Resource already exists',
+        requestId
+      });
+      return;
+    }
+    
+    // Handle other database errors
+    res.status(status.INTERNAL_SERVER_ERROR).json({
+      status: 'error',
+      message: 'Database error',
       requestId
     });
     return;
