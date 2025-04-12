@@ -1,4 +1,4 @@
-# Cotove API
+# Cotove API (In Progress)
 
 A RESTful API for the Cotove application built with Express, TypeScript, and PostgreSQL.
 
