@@ -1,0 +1,169 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Guidelines for Project Structure
+globs: **/*
+alwaysApply: true
+---
+
+# Project Structure & Code Organization
+
+## Package Manager
+- Use `npm` for all package installations and management
+
+## SERVER PORT
+- 5000
+
+
+## Instruction
+- Always check the folders and files if where to add a certain changes and ask for confirmation if wanted to proceed.
+
+## Core Libraries / Packages
+- Express
+- TypeScript
+- PostgreSQL
+- DrizzleORM
+- ZOD
+- CORS
+- Helmet
+- Jest
+- Winston
+- Morgan
+- Dotenv
+- Husky
+- CORS
+- Passport - For Authentication
+- Prettier
+- ESLint
+
+## Naming Conventions
+- `kebab-case` - for all folders/files
+- `_kebab-case` - for feature and route domain's specific common modules.
+- `PascalCase` - for classes, types
+- `snake_case` - for database tables and columns
+- `camelCase` - for functions, zod schemas and etc.
+
+```
+cotove-api/
+├── src/
+│   ├── config/                 # Configuration files
+│   │   ├── logger.ts          # Winston logger configuration
+│   │   └── index.ts           # Main configuration exports
+│   │
+│   ├── middlewares/           # Express middlewares
+│   │   ├── error-handler.ts   # Global error handling
+│   │   ├── validate.ts        # Request validation using Zod
+│   │   └── index.ts           # Middleware exports
+│   │
+│   ├── routes/                # API routes
+│   │   └── v1/               # API version 1
+│   │       ├── auth.route.ts # Authentication routes
+│   │       └── index.ts      # Route aggregator
+│   │
+│   ├── types/                 # TypeScript type definitions
+│   │   └── index.ts          # Common type definitions
+│   │
+│   ├── utils/                 # Utility functions
+│   │   ├── api-error.ts      # Custom API error class
+│   │   ├── pick.ts           # Object property picker
+│   │   └── index.ts          # Utility exports
+│   │
+│   ├── app.ts                # Express application setup
+│   └── server.ts             # Server entry point
+│
+├── tests/                    # Test files
+│   ├── integration/         # Integration tests
+│   └── unit/               # Unit tests
+│
+├── .env                     # Environment variables
+├── .env.example            # Example environment variables
+├── .eslintrc.js           # ESLint configuration
+├── .gitignore             # Git ignore rules
+├── .prettierrc            # Prettier configuration
+├── jest.config.js         # Jest configuration
+├── package.json           # Project dependencies and scripts
+├── tsconfig.json          # TypeScript configuration
+└── README.md              # Project documentation
+```
+
+## Directory Structure Details
+
+### `src/` - Source Code
+- **config/**: Application configuration
+  - `logger.ts`: Winston logger setup with custom formatting
+  - `index.ts`: Centralized configuration exports
+
+- **middlewares/**: Express middlewares
+  - `error-handler.ts`: Global error handling with request ID tracking
+  - `validate.ts`: Request validation using Zod schemas
+  - `index.ts`: Middleware exports
+
+- **routes/**: API routes
+  - `v1/`: Version 1 API endpoints
+    - `auth.route.ts`: Authentication routes with validation
+    - `index.ts`: Route aggregator and health check
+
+- **types/**: TypeScript type definitions
+  - `index.ts`: Common interfaces (ApiResponse, PaginationParams, etc.)
+
+- **utils/**: Utility functions
+  - `api-error.ts`: Custom error class for API errors
+  - `pick.ts`: Type-safe object property picker
+  - `index.ts`: Utility function exports
+
+- **app.ts**: Express application setup
+  - Middleware configuration
+  - Route mounting
+  - Error handling setup
+
+- **server.ts**: Server entry point
+  - Environment validation
+  - Server startup
+  - Graceful shutdown
+
+### `tests/` - Test Files
+- **integration/**: Integration tests
+- **unit/**: Unit tests
+
+### Configuration Files
+- `.env`: Environment variables (not in version control)
+- `.env.example`: Example environment variables
+- `.eslintrc.js`: ESLint configuration
+- `.prettierrc`: Prettier configuration
+- `jest.config.js`: Jest test configuration
+- `tsconfig.json`: TypeScript configuration
+
+## Key Features
+
+1. **Type Safety**
+   - Strong TypeScript typing
+   - Custom type definitions
+   - Type-safe utilities
+
+2. **Error Handling**
+   - Centralized error handling
+   - Request ID tracking
+   - Detailed error logging
+
+3. **Validation**
+   - Zod schema validation
+   - Request parameter validation
+   - Type-safe validation
+
+4. **Logging**
+   - Winston logger integration
+   - Request ID tracking
+   - Structured logging
+
+5. **API Structure**
+   - Versioned API routes
+   - Consistent response format
+   - Health check endpoint
+
+6. **Development Tools**
+   - ESLint configuration
+   - Prettier formatting
+   - Jest testing setup 
