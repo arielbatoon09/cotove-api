@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import app from './app';
+import app from '@/app';
 import { logger } from '@/config/logger';
 import { checkDatabaseConnection } from '@/config/database';
 
