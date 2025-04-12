@@ -2,8 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import { errorHandler, requestId } from './middlewares/error-handler';
-import v1Router from './routes/v1';
+import dotenv from 'dotenv';
+import { errorHandler, requestId } from '@/middlewares/error-handler';
+import v1Router from '@/routes/v1';
+
+dotenv.config();
 
 const app = express();
 

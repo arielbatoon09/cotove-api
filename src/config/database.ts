@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
-import { logger } from './logger';
+import { logger } from '@/config/logger';
 
 if (!process.env.DATABASE_URI) {
   throw new Error('DATABASE_URI is not defined in environment variables');
