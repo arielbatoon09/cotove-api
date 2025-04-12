@@ -9,11 +9,17 @@ export const createUserSchema = z.object({
   last_login: z.date().optional(),
 });
 
+export const loginUserSchema = z.object({
+  email: z.string().email('Invalid email format'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
 export const updateUserSchema = createUserSchema.partial().omit({ password: true });
 
 // TypeScript type derived from the schema
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+export type LoginUserInput = z.infer<typeof loginUserSchema>;
 
 // User model class
 export class UserModel {
