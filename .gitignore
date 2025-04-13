@@ -34,9 +34,6 @@ coverage/
 *.tmp
 *.temp 
 
-.cursorrules
-.cursor
-
 # Database
 *.db
 *.db-journal
@@ -46,3 +43,6 @@ coverage/
 
 # Drizzle
 src/database/migrations
+
+# Cursor
+.cursor
