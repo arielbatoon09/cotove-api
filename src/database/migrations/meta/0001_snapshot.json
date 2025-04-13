@@ -1,6 +1,6 @@
 {
-  "id": "0d80b7fc-9264-4cf1-a997-c475abd6a774",
-  "prevId": "ffc9b325-7693-4f32-8ae8-ed87c5f57dfa",
+  "id": "07a37225-2ef6-4309-9d19-987af7eff102",
+  "prevId": "541cae08-e4d1-4b70-bb1c-3d317901c619",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -10,25 +10,26 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "user_id": {
           "name": "user_id",
-          "type": "integer",
+          "type": "uuid",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "token": {
           "name": "token",
-          "type": "varchar(255)",
+          "type": "varchar(6)",
           "primaryKey": false,
           "notNull": true
         },
         "type": {
           "name": "type",
-          "type": "varchar(50)",
+          "type": "varchar(20)",
           "primaryKey": false,
           "notNull": true
         },
@@ -36,7 +37,7 @@
           "name": "expires_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "blacklisted": {
           "name": "blacklisted",
@@ -68,11 +69,11 @@
         }
       },
       "indexes": {
-        "otp_expires_at_idx": {
-          "name": "otp_expires_at_idx",
+        "otp_id_idx": {
+          "name": "otp_id_idx",
           "columns": [
             {
-              "expression": "expires_at",
+              "expression": "id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -128,11 +129,41 @@
           "method": "btree",
           "with": {}
         },
-        "otp_attempts_idx": {
-          "name": "otp_attempts_idx",
+        "otp_expires_at_idx": {
+          "name": "otp_expires_at_idx",
           "columns": [
             {
-              "expression": "attempts",
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "otp_created_at_idx": {
+          "name": "otp_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "otp_updated_at_idx": {
+          "name": "otp_updated_at_idx",
+          "columns": [
+            {
+              "expression": "updated_at",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -171,15 +202,16 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "user_id": {
           "name": "user_id",
-          "type": "integer",
+          "type": "uuid",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "token": {
           "name": "token",
@@ -340,9 +372,10 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "uuid",
           "primaryKey": true,
-          "notNull": true
+          "notNull": true,
+          "default": "gen_random_uuid()"
         },
         "email": {
           "name": "email",
@@ -371,6 +404,12 @@
         },
         "last_login": {
           "name": "last_login",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "verified_at": {
+          "name": "verified_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": false
@@ -456,6 +495,21 @@
           "columns": [
             {
               "expression": "updated_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "users_verified_at_idx": {
+          "name": "users_verified_at_idx",
+          "columns": [
+            {
+              "expression": "verified_at",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

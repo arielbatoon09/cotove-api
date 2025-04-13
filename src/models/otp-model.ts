@@ -15,8 +15,8 @@ export type CreateOtpInput = z.infer<typeof createOtpSchema>;
 export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
 
 export class OtpModel {
-  id?: number;
-  userId?: number;
+  id?: string;
+  userId: string;
   token: string;
   type: string;
   expiresAt?: Date;
@@ -27,7 +27,7 @@ export class OtpModel {
 
   constructor(data: Partial<OtpModel>) {
     this.id = data.id;
-    this.userId = data.userId !== undefined ? data.userId : undefined;
+    this.userId = data.userId || '';
     this.token = data.token || '';
     this.type = data.type || '';
     this.expiresAt = data.expiresAt;

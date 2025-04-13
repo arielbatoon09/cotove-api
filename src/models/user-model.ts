@@ -7,6 +7,7 @@ export const createUserSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
   is_active: z.boolean().optional().default(true),
   last_login: z.date().optional(),
+  verified_at: z.date().optional(),
 });
 
 export const loginUserSchema = z.object({
@@ -23,12 +24,13 @@ export type LoginUserInput = z.infer<typeof loginUserSchema>;
 
 // User model class
 export class UserModel {
-  id?: number;
+  id?: string;
   name: string;
   email: string;
   password: string;
   isActive: boolean;
   lastLogin?: Date;
+  verifiedAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
 
@@ -38,6 +40,7 @@ export class UserModel {
     this.password = data.password;
     this.isActive = data.is_active ?? true;
     this.lastLogin = data.last_login;
+    this.verifiedAt = data.verified_at;
   }
 
   // Convert to a plain object for database operations
@@ -49,6 +52,7 @@ export class UserModel {
       password: this.password,
       is_active: this.isActive,
       last_login: this.lastLogin,
+      verified_at: this.verifiedAt,
       created_at: this.createdAt,
       updated_at: this.updatedAt,
     };
@@ -62,6 +66,7 @@ export class UserModel {
       password: data.password,
       is_active: data.is_active,
       last_login: data.last_login,
+      verified_at: data.verified_at,
     });
     user.id = data.id;
     user.createdAt = data.created_at;

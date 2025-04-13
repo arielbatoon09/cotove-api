@@ -1,10 +1,10 @@
-import { pgTable, serial, integer, varchar, timestamp, index, boolean } from "drizzle-orm/pg-core";
+import { pgTable, varchar, timestamp, index, boolean, uuid } from "drizzle-orm/pg-core";
 import { users } from "./user.schema";
 import { relations } from "drizzle-orm";
 
 export const tokens = pgTable('tokens', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id),
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id),
   token: varchar('token', { length: 255 }).notNull(),
   type: varchar('type', { length: 50 }).notNull(),
   expiresAt: timestamp('expires_at'),

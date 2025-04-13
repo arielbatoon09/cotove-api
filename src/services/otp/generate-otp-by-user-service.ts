@@ -8,7 +8,7 @@ import { ApiError } from "@/utils/api-error";
 // Define valid OTP types
 export type OtpType = 'emailVerification' | 'phoneVerification' | 'resetPassword';
 
-export const generateOtpByUserService = async (userId: number, type: OtpType) => {
+export const generateOtpByUserService = async (userId: string, type: OtpType) => {
   try {
     // Check if userId is valid
     if (!userId) {
@@ -32,7 +32,7 @@ export const generateOtpByUserService = async (userId: number, type: OtpType) =>
       userId: userId,
       token: otpModel.token,
       type: otpModel.type,
-      expiresAt: otpModel.expiresAt,
+      expiresAt: otpModel.expiresAt || expiration,
       blacklisted: otpModel.blacklisted,
       attempts: otpModel.attempts
     };
