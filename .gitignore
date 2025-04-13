@@ -45,4 +45,4 @@ coverage/
 *.db-shm
 
 # Drizzle
-./src/database/migrations
+src/database/migrations
