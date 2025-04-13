@@ -1,6 +1,6 @@
 import { db } from '@/config/database';
 import { users } from '@/database/schema/user.schema';
-import { UserModel, CreateUserInput } from '@/models/user-model-ts';
+import { UserModel, CreateUserInput } from '@/models/user-model';
 import { hashPassword } from '@/utils/hash';
 
 export async function addUser(userData: CreateUserInput) {

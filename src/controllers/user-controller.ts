@@ -1,8 +1,9 @@
 import type { Request, Response, NextFunction } from "express";
 import userService from "@/services/user";
-import { createUserSchema, loginUserSchema } from "@/models/user-model-ts";
+import { createUserSchema, loginUserSchema } from "@/models/user-model";
 import { ApiError } from "@/utils/api-error";
 import { verifyPassword } from "@/utils/hash";
+import otpService from "@/services/otp";
 
 // Handle Create User
 export async function handleCreateUser(req: Request, res: Response, next: NextFunction) {
@@ -14,11 +15,27 @@ export async function handleCreateUser(req: Request, res: Response, next: NextFu
       throw new ApiError(409, 'Email already exists');
     }
     
+    // Add user to database
     const newUser = await userService.addUser(validatedData);
+
+    // Check if user was created successfully
+    if (!newUser.id) {
+      throw new ApiError(500, 'Failed to create user');
+    }
+
+    // Generate OTP if user was created successfully
+    const otp = await otpService.generateOtpByUserService(newUser.id, 'emailVerification');
     
+    if (!otp) {
+      throw new ApiError(500, 'Failed to generate OTP');
+    }
+
     res.status(201).json({
       success: true,
-      data: newUser,
+      data: {
+        user: newUser,
+        otp: otp
+      },
       message: 'User created successfully'
     });
   } catch (error) {

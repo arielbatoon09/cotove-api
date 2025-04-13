@@ -1,4 +1,6 @@
 import { pgTable, serial, varchar, timestamp, boolean, index } from 'drizzle-orm/pg-core';
+import { otp } from './otp.schema';
+import { relations } from 'drizzle-orm';
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -16,3 +18,8 @@ export const users = pgTable('users', {
   index('users_last_login_idx').on(table.lastLogin),
   index('users_updated_at_idx').on(table.updatedAt),
 ]);
+
+// Relations
+export const userRelations = relations(users, ({ many }) => ({
+  otp: many(otp),
+}));
