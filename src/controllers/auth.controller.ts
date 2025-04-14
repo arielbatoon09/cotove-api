@@ -1,88 +1,72 @@
 import { Request, Response, RequestHandler } from 'express';
-import userService from '@/services/user';
-import tokenService from '@/services/token';
-import { TokenType } from '@/models/token-model';
 import { ApiError } from '@/utils/api-error';
-import { verifyPassword } from '@/utils/hash';
-import { and, eq } from 'drizzle-orm';
-import { tokens } from '@/database/schema/token.schema';
-import { db } from '@/config/database';
-import { LoginService } from '@/services/auth/login.service';
-import { RefreshTokenService } from '@/services/auth/refresh-token.service';
-import { LogoutService } from '@/services/auth/logout.service';
 import { UserRepository } from '@/repositories/user.repository';
 import { TokenRepository } from '@/repositories/token.repository';
+import { LoginService } from '@/services/auth/login.service';
+import { signupService } from '@/services/auth/signup.service';
+import { RefreshTokenService } from '@/services/auth/refresh-token.service';
+import { logoutService } from '@/services/auth/logout.service';
+import { verifyEmailService } from '@/services/auth/verify-email.service';
+import { passwordResetService } from '@/services/auth/password-reset.service';
 
 export class AuthController {
   private loginService: LoginService;
   private refreshTokenService: RefreshTokenService;
-  private logoutService: LogoutService;
 
-  constructor() {
-    const userRepository = new UserRepository();
-    const tokenRepository = new TokenRepository();
-    this.loginService = new LoginService(userRepository, tokenRepository);
-    this.refreshTokenService = new RefreshTokenService(tokenRepository);
-    this.logoutService = new LogoutService(tokenRepository);
-
-    // Bind methods to ensure proper 'this' context
-    this.signup = this.signup.bind(this);
-    this.verifyEmail = this.verifyEmail.bind(this);
-    this.requestPasswordReset = this.requestPasswordReset.bind(this);
-    this.resetPassword = this.resetPassword.bind(this);
+  constructor(
+    private userRepository: UserRepository,
+    private tokenRepository: TokenRepository
+  ) {
+    this.loginService = new LoginService(this.userRepository, this.tokenRepository);
+    this.refreshTokenService = new RefreshTokenService(this.tokenRepository);
   }
+
+  login: RequestHandler = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { email, password } = req.body;
+      
+      const result = await this.loginService.execute({ email, password });
+      
+      // Set refresh token in HTTP-only cookie
+      res.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
+      
+      res.json({
+        message: 'Login successful',
+        user: result.user,
+        accessToken: result.accessToken
+      });
+    } catch (error) {
+      if (error instanceof ApiError) {
+        res.status(error.statusCode).json({ 
+          message: error.message,
+          error: error.name,
+        });
+      } else {
+        console.error('Login error:', error);
+        res.status(500).json({ 
+          message: 'An unexpected error occurred during login',
+          error: 'InternalServerError',
+        });
+      }
+    }
+  };
 
   signup: RequestHandler = async (req: Request, res: Response): Promise<void> => {
     try {
       const { email, password, name } = req.body;
       
-      // Check if user already exists
-      const existingUser = await userService.getUserByEmail(email);
-      if (existingUser) {
-        throw new ApiError(409, 'Email already registered');
-      }
+      const result = await signupService.signup(email, password, name);
       
-      // Generate verification token first
-      let verificationToken;
-      try {
-        // Generate token with a temporary user ID (will be updated after user creation)
-        verificationToken = await tokenService.generateEmailVerificationToken('temp', email);
-      } catch (tokenError) {
-        console.error('Failed to generate verification token:', tokenError);
-        throw new ApiError(500, 'Failed to generate verification token');
-      }
-      
-      // Create user
-      const newUser = await userService.addUser({ 
-        email, 
-        password, 
-        name,
-        is_active: true 
+      res.status(201).json({
+        message: 'User created successfully. Please verify your email.',
+        user: result.user,
+        verificationToken: result.verificationToken
       });
-      
-      if (!newUser?.id || !newUser?.email) {
-        throw new ApiError(500, 'Failed to create user');
-      }
-
-      try {
-        // Store the verification token with the actual user ID
-        await tokenService.storeToken(newUser.id, verificationToken, TokenType.EMAIL_VERIFICATION);
-        
-        // TODO: Send verification email
-        
-        res.status(201).json({
-          message: 'User created successfully. Please verify your email.',
-          user: newUser,
-          verificationToken: verificationToken
-        });
-      } catch (tokenError) {
-        // If token storage fails, we need to delete the user
-        console.error('Failed to store verification token:', tokenError);
-        
-        // TODO: Add a method to delete the user if token storage fails
-        // For now, we'll just throw an error
-        throw new ApiError(500, 'Failed to complete registration. Please try again.');
-      }
     } catch (error) {
       if (error instanceof ApiError) {
         res.status(error.statusCode).json({ 
@@ -99,61 +83,14 @@ export class AuthController {
     }
   };
 
-  login = async (req: Request, res: Response) => {
-    try {
-      const { email, password } = req.body;
-      const result = await this.loginService.execute({ email, password });
-
-      // Set refresh token in HTTP-only cookie
-      res.cookie('refreshToken', result.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-      });
-
-      res.json({
-        success: true,
-        message: 'Login successful',
-        data: {
-          user: result.user,
-          accessToken: result.accessToken
-        }
-      });
-    } catch (error) {
-      if (error instanceof ApiError) {
-        res.status(error.statusCode).json({
-          success: false,
-          message: error.message
-        });
-      } else {
-        res.status(500).json({
-          success: false,
-          message: 'Internal server error'
-        });
-      }
-    }
-  };
-
   verifyEmail: RequestHandler = async (req: Request, res: Response): Promise<void> => {
     try {
       const { token } = req.body;
       
-      if (!token) {
-        throw new ApiError(400, 'Verification token is required');
-      }
-      
-      // Verify token
-      const payload = await tokenService.verifyToken(token, TokenType.EMAIL_VERIFICATION);
-      
-      // Blacklist token
-      await tokenService.blacklistToken(token);
-
-      // TODO: Update user email verification status
+      await verifyEmailService.execute(token);
 
       res.json({ 
-        message: 'Email verified successfully',
-        userId: payload.userId
+        message: 'Email verified successfully'
       });
     } catch (error) {
       if (error instanceof ApiError) {
@@ -174,15 +111,11 @@ export class AuthController {
   refreshToken = async (req: Request, res: Response) => {
     try {
       const refreshToken = req.cookies.refreshToken;
-      const result = await this.refreshTokenService.execute(refreshToken);
+      if (!refreshToken) {
+        throw new ApiError(401, 'Refresh token is missing');
+      }
 
-      // Set new refresh token in HTTP-only cookie
-      res.cookie('refreshToken', result.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-      });
+      const result = await this.refreshTokenService.execute(refreshToken);
 
       res.json({
         success: true,
@@ -198,6 +131,7 @@ export class AuthController {
           message: error.message
         });
       } else {
+        console.error('Refresh token error:', error);
         res.status(500).json({
           success: false,
           message: 'Internal server error'
@@ -210,25 +144,8 @@ export class AuthController {
     try {
       const { email } = req.body;
       
-      if (!email) {
-        throw new ApiError(400, 'Email is required');
-      }
+      await passwordResetService.requestPasswordReset(email);
       
-      // Get user by email
-      const user = await userService.getUserByEmail(email);
-      
-      if (!user) {
-        // Don't reveal if user exists
-        res.json({ message: 'If an account exists with this email, you will receive password reset instructions.' });
-        return;
-      }
-
-      // Generate and store password reset token
-      const resetToken = await tokenService.generatePasswordResetToken(user.id!, user.email);
-      await tokenService.storeToken(user.id!, resetToken, TokenType.RESET_PASSWORD);
-
-      // TODO: Send password reset email
-
       res.json({ message: 'If an account exists with this email, you will receive password reset instructions.' });
     } catch (error) {
       if (error instanceof ApiError) {
@@ -250,17 +167,7 @@ export class AuthController {
     try {
       const { token, newPassword } = req.body;
       
-      if (!token || !newPassword) {
-        throw new ApiError(400, 'Token and new password are required');
-      }
-      
-      // Verify token
-      const payload = await tokenService.verifyToken(token, TokenType.RESET_PASSWORD);
-      
-      // Blacklist token
-      await tokenService.blacklistToken(token);
-
-      // TODO: Update user password
+      await passwordResetService.resetPassword(token, newPassword);
 
       res.json({ message: 'Password reset successfully' });
     } catch (error) {
@@ -282,10 +189,14 @@ export class AuthController {
   logout = async (req: Request, res: Response) => {
     try {
       const refreshToken = req.cookies.refreshToken;
-      await this.logoutService.execute(refreshToken);
+      await logoutService.execute(refreshToken);
 
       // Clear refresh token cookie
-      res.clearCookie('refreshToken');
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+      });
 
       res.json({
         success: true,
@@ -298,6 +209,7 @@ export class AuthController {
           message: error.message
         });
       } else {
+        console.error('Logout error:', error);
         res.status(500).json({
           success: false,
           message: 'Internal server error'
@@ -306,3 +218,9 @@ export class AuthController {
     }
   };
 }
+
+// Export a singleton instance
+export const authController = new AuthController(
+  new UserRepository(),
+  new TokenRepository()
+);

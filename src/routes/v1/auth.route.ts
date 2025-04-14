@@ -1,8 +1,7 @@
 import type { Router } from "express";
 import { createRouter } from "@/utils/create-handler";
-import { AuthController } from "@/controllers/auth.controller";
+import { authController } from "@/controllers/auth.controller";
 import { authMiddleware } from "@/middlewares/auth.middleware";
-const authController = new AuthController();
 
 export default createRouter((router: Router) => {
   router.post('/signup', authController.signup);
