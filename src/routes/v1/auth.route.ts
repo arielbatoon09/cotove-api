@@ -11,7 +11,7 @@ export default createRouter((router: Router) => {
   router.post('/request-password-reset', authController.requestPasswordReset);
   router.post('/reset-password', authController.resetPassword);
   router.post('/refresh-token', authController.refreshToken);
-  router.post('/logout', authController.logout);
+  router.post('/logout', authMiddleware, authController.logout);
 
   // Sample Protected Route
   router.post('/protected', authMiddleware, (req, res) => {

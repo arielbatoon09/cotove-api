@@ -4,6 +4,9 @@ import tokenService from '@/services/token';
 import { TokenType } from '@/models/token-model';
 import { ApiError } from '@/utils/api-error';
 import { verifyPassword } from '@/utils/hash';
+import { and, eq } from 'drizzle-orm';
+import { tokens } from '@/database/schema/token.schema';
+import { db } from '@/config/database';
 
 export class AuthController {
   constructor() {
@@ -100,30 +103,52 @@ export class AuthController {
         throw new ApiError(401, 'Invalid email or password');
       }
 
-      // Generate tokens
-      const { accessToken, refreshToken } = await tokenService.generateAuthTokens(user.id!, user.email);
-      
-      // Store refresh token
-      await tokenService.storeRefreshToken(user.id!, refreshToken);
+      // Check if user is active
+      if (!user.isActive) {
+        throw new ApiError(403, 'User account is deactivated');
+      }
 
-      // Set refresh token as HTTP-only cookie
+      // Ensure user has required properties
+      if (!user.id || !user.email) {
+        throw new ApiError(500, 'User data is incomplete');
+      }
+
+      // Blacklist any existing refresh tokens for this user
+      const existingTokens = await db.select().from(tokens).where(
+        and(
+          eq(tokens.userId, user.id),
+          eq(tokens.type, TokenType.REFRESH)
+        )
+      );
+
+      for (const token of existingTokens) {
+        await tokenService.blacklistToken(token.token);
+      }
+
+      // Generate new tokens using the generateAuthTokens method
+      const { accessToken, refreshToken } = await tokenService.generateAuthTokens(user.id, user.email);
+      
+      // Store refresh token in database
+      await tokenService.storeRefreshToken(user.id, refreshToken);
+
+      // Set refresh token in HTTP-only cookie
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
-        secure: true,
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: this.parseExpiryToMilliseconds(process.env.REFRESH_TOKEN_EXPIRY)
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
       });
 
-      res.json({
+      // Send response with access token
+      res.status(200).json({
         message: 'Login successful',
-        accessToken,
         user: {
           id: user.id,
           email: user.email,
           name: user.name,
-          is_active: user.isActive,
-          verified_at: user.verifiedAt,
-        }
+          isActive: user.isActive
+        },
+        accessToken
       });
     } catch (error) {
       if (error instanceof ApiError) {
@@ -179,6 +204,11 @@ export class AuthController {
 
   refreshToken: RequestHandler = async (req: Request, res: Response): Promise<void> => {
     try {
+      // Safely check if cookies exist
+      if (!req.cookies) {
+        throw new ApiError(400, 'No cookies found. Please log in again.');
+      }
+      
       const refreshToken = req.cookies.refreshToken;
       
       if (!refreshToken) {
@@ -205,7 +235,7 @@ export class AuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: this.parseExpiryToMilliseconds(process.env.REFRESH_TOKEN_EXPIRY)
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
       });
 
       res.json({
@@ -303,32 +333,56 @@ export class AuthController {
 
   logout: RequestHandler = async (req: Request, res: Response): Promise<void> => {
     try {
-      const refreshToken = req.cookies.refreshToken;
+      // Safely get refresh token from cookie
+      const refreshToken = req.cookies?.refreshToken;
       
       if (!refreshToken) {
-        throw new ApiError(400, 'Refresh token is required');
+        // If no refresh token, just clear the cookie and return success
+        res.clearCookie('refreshToken', {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'strict'
+        });
+        
+        res.json({ 
+          message: 'Logged out successfully',
+          clearAccessToken: true 
+        });
+        return;
       }
       
-      // Blacklist refresh token
-      await tokenService.blacklistToken(refreshToken);
+      try {
+        // Try to blacklist refresh token if it exists
+        await tokenService.blacklistToken(refreshToken);
+      } catch (blacklistError) {
+        console.error('Error blacklisting token:', blacklistError);
+        // Continue with logout even if blacklisting fails
+      }
 
       // Clear refresh token cookie
-      res.clearCookie('refreshToken');
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict'
+      });
 
-      res.json({ message: 'Logged out successfully' });
+      res.json({ 
+        message: 'Logged out successfully',
+        clearAccessToken: true 
+      });
     } catch (error) {
-      if (error instanceof ApiError) {
-        res.status(error.statusCode).json({ 
-          message: error.message,
-          error: error.name,
-        });
-      } else {
-        console.error('Logout error:', error);
-        res.status(500).json({ 
-          message: 'An unexpected error occurred during logout',
-          error: 'InternalServerError',
-        });
-      }
+      console.error('Logout error:', error);
+      // Even if there's an error, try to clear the cookie
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict'
+      });
+      
+      res.status(200).json({ 
+        message: 'Logged out successfully',
+        clearAccessToken: true 
+      });
     }
   };
 

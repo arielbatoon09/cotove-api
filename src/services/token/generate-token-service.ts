@@ -15,29 +15,26 @@ export interface AuthTokens {
 }
 
 // Validate required environment variables
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
+const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+
+if (!JWT_ACCESS_SECRET || !JWT_REFRESH_SECRET) {
+  throw new Error('JWT_ACCESS_SECRET and JWT_REFRESH_SECRET environment variables are required');
 }
 
 // Token expiration times from environment variables
-const ACCESS_TOKEN_EXPIRY = process.env.ACCESS_TOKEN_EXPIRY;
-const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY;
-const EMAIL_VERIFICATION_EXPIRY = process.env.EMAIL_VERIFICATION_EXPIRY;
-const RESET_PASSWORD_EXPIRY = process.env.RESET_PASSWORD_EXPIRY;
-
-// Validate required expiration times
-if (!ACCESS_TOKEN_EXPIRY || !REFRESH_TOKEN_EXPIRY || !EMAIL_VERIFICATION_EXPIRY || !RESET_PASSWORD_EXPIRY) {
-  throw new Error('Token expiration environment variables are required');
-}
+const ACCESS_TOKEN_EXPIRY = process.env.ACCESS_TOKEN_EXPIRY || '15m';
+const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || '7d';
+const EMAIL_VERIFICATION_EXPIRY = process.env.EMAIL_VERIFICATION_EXPIRY || '24h';
+const RESET_PASSWORD_EXPIRY = process.env.RESET_PASSWORD_EXPIRY || '1h';
 
 /**
  * Generate a JWT token with the given payload and expiration
  */
-export const generateToken = (payload: TokenPayload, expiresIn: string): string => {
+export const generateToken = (payload: TokenPayload, secret: string, expiresIn: string): string => {
   try {
     const options: SignOptions = { expiresIn: expiresIn as SignOptions['expiresIn'] };
-    return sign(payload, JWT_SECRET, options);
+    return sign(payload, secret, options);
   } catch (error) {
     console.error('Error generating token:', error);
     throw new ApiError(500, 'Failed to generate token');
@@ -49,14 +46,17 @@ export const generateToken = (payload: TokenPayload, expiresIn: string): string 
  */
 export const generateAuthTokens = async (userId: string, email: string): Promise<AuthTokens> => {
   try {
-    // Generate tokens
+    // Generate access token
     const accessToken = generateToken(
       { userId, email, type: TokenType.ACCESS },
+      JWT_ACCESS_SECRET,
       ACCESS_TOKEN_EXPIRY
     );
 
+    // Generate refresh token
     const refreshToken = generateToken(
       { userId, email, type: TokenType.REFRESH },
+      JWT_REFRESH_SECRET,
       REFRESH_TOKEN_EXPIRY
     );
 
@@ -74,6 +74,7 @@ export const generateEmailVerificationToken = async (userId: string, email: stri
   try {
     return generateToken(
       { userId, email, type: TokenType.EMAIL_VERIFICATION },
+      JWT_ACCESS_SECRET,
       EMAIL_VERIFICATION_EXPIRY
     );
   } catch (error) {
@@ -89,6 +90,7 @@ export const generatePasswordResetToken = async (userId: string, email: string):
   try {
     return generateToken(
       { userId, email, type: TokenType.RESET_PASSWORD },
+      JWT_ACCESS_SECRET,
       RESET_PASSWORD_EXPIRY
     );
   } catch (error) {

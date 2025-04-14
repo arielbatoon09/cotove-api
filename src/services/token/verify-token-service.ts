@@ -8,9 +8,11 @@ import { TokenPayload } from './generate-token-service';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 // Validate required environment variables
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
+const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+
+if (!JWT_ACCESS_SECRET || !JWT_REFRESH_SECRET) {
+  throw new Error('JWT_ACCESS_SECRET and JWT_REFRESH_SECRET environment variables are required');
 }
 
 /**
@@ -21,8 +23,11 @@ if (!JWT_SECRET) {
  */
 export const verifyToken = async (token: string, type: TokenType): Promise<TokenPayload> => {
   try {
+    // Select the appropriate secret based on token type
+    const secret = type === TokenType.ACCESS ? JWT_ACCESS_SECRET : JWT_REFRESH_SECRET;
+    
     // First verify JWT
-    const decoded = verify(token, JWT_SECRET) as JwtPayload & TokenPayload;
+    const decoded = verify(token, secret) as JwtPayload & TokenPayload;
     
     // For access tokens, we only verify the JWT
     if (type === TokenType.ACCESS) {

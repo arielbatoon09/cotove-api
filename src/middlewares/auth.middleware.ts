@@ -4,6 +4,9 @@ import tokenService from '@/services/token';
 import { TokenType } from '@/models/token-model';
 import { UserModel } from '@/models/user-model';
 import userService from '@/services/user';
+import { db } from '@/config/database';
+import { tokens } from '@/database/schema/token.schema';
+import { eq, and } from 'drizzle-orm';
 
 // Extend Express Request type to include user
 declare global {
@@ -28,7 +31,19 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
       throw new ApiError(401, 'Invalid authorization format. Use Bearer token');
     }
 
-    // Verify the access token and ensure it's an access token
+    // Check if token is blacklisted in the database
+    const blacklistedToken = await db.select().from(tokens).where(
+      and(
+        eq(tokens.token, token),
+        eq(tokens.blacklisted, true)
+      )
+    ).limit(1);
+
+    if (blacklistedToken.length > 0) {
+      throw new ApiError(401, 'Token has been revoked');
+    }
+
+    // Verify the access token
     const payload = await tokenService.verifyToken(token, TokenType.ACCESS);
     
     // Double check the token type from payload

@@ -1,3 +1,0 @@
-1. ✔️ Add utilities to handle Api Errors, Creating Handlers, and Hash
-2. ✔️ Signup: Add new user with custom hashing password logic
-3. ✔️ Authentication ...
