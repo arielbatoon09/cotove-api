@@ -24,7 +24,7 @@ if (!JWT_ACCESS_SECRET || !JWT_REFRESH_SECRET) {
 export const verifyToken = async (token: string, type: TokenType): Promise<TokenPayload> => {
   try {
     // Select the appropriate secret based on token type
-    const secret = type === TokenType.ACCESS ? JWT_ACCESS_SECRET : JWT_REFRESH_SECRET;
+    const secret = type === TokenType.REFRESH ? JWT_REFRESH_SECRET : JWT_ACCESS_SECRET;
     
     // First verify JWT
     const decoded = verify(token, secret) as JwtPayload & TokenPayload;

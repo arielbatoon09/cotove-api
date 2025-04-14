@@ -1,6 +1,7 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { logger } from '@/config/logger';
+import * as schema from '@/database/schema';
 
 if (!process.env.DATABASE_URI) {
   throw new Error('DATABASE_URI is not defined in environment variables');
@@ -11,7 +12,7 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
-export const db = drizzle(pool);
+export const db = drizzle(pool, { schema });
 
 export const checkDatabaseConnection = async () => {
   try {
@@ -22,4 +23,4 @@ export const checkDatabaseConnection = async () => {
     logger.error('Failed to connect to the database:', error);
     return false;
   }
-}; 
+};
