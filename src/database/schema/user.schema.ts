@@ -1,7 +1,8 @@
-import { pgTable, varchar, timestamp, boolean, index, uuid } from 'drizzle-orm/pg-core';
+import { pgTable, varchar, timestamp, boolean, index, uuid, integer } from 'drizzle-orm/pg-core';
 import { otp } from './otp.schema';
 import { relations } from 'drizzle-orm';
 import { tokens } from './token.schema';
+
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: 255 }).notNull().unique(),
@@ -10,6 +11,7 @@ export const users = pgTable('users', {
   isActive: boolean('is_active').default(true),
   lastLogin: timestamp('last_login'),
   verifiedAt: timestamp('verified_at'),
+  tokenVersion: integer('token_version').default(0),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => [
@@ -19,6 +21,7 @@ export const users = pgTable('users', {
   index('users_last_login_idx').on(table.lastLogin),
   index('users_updated_at_idx').on(table.updatedAt),
   index('users_verified_at_idx').on(table.verifiedAt),
+  index('users_token_version_idx').on(table.tokenVersion),
 ]);
 
 // Relations

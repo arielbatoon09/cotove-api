@@ -10,6 +10,7 @@ export const createUserSchema = z.object({
   isActive: z.boolean().optional().default(true),
   lastLogin: z.date().optional(),
   verifiedAt: z.date().optional(),
+  tokenVersion: z.number().optional().default(0),
 });
 
 export const loginUserSchema = z.object({
@@ -40,6 +41,7 @@ export class UserModel {
   isActive: boolean;
   lastLogin: Date | null;
   verifiedAt: Date | null;
+  tokenVersion: number;
   createdAt: Date;
   updatedAt: Date;
 
@@ -50,6 +52,7 @@ export class UserModel {
     this.isActive = data.isActive ?? true;
     this.lastLogin = data.lastLogin ?? null;
     this.verifiedAt = data.verifiedAt ?? null;
+    this.tokenVersion = data.tokenVersion ?? 0;
     this.createdAt = new Date();
     this.updatedAt = new Date();
   }
@@ -63,6 +66,7 @@ export class UserModel {
       isActive: this.isActive,
       lastLogin: this.lastLogin,
       verifiedAt: this.verifiedAt,
+      tokenVersion: this.tokenVersion,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
       ...(this.id && { id: this.id })
@@ -75,7 +79,8 @@ export class UserModel {
       name: data.name || '',
       email: data.email,
       password: data.password,
-      isActive: data.isActive || true
+      isActive: data.isActive || true,
+      tokenVersion: data.tokenVersion || 0
     });
     user.id = data.id;
     user.lastLogin = data.lastLogin;

@@ -36,6 +36,7 @@ export class UserRepository {
     isActive: boolean;
     lastLogin: Date;
     verifiedAt: Date;
+    tokenVersion: number;
   }>): Promise<UserModel> {
     const currentUser = await this.findById(id);
     if (!currentUser) {
@@ -49,7 +50,8 @@ export class UserRepository {
       name: userData.name ?? currentUser.name,
       isActive: userData.isActive ?? currentUser.isActive,
       lastLogin: userData.lastLogin ?? currentUser.lastLogin,
-      verifiedAt: userData.verifiedAt ?? currentUser.verifiedAt
+      verifiedAt: userData.verifiedAt ?? currentUser.verifiedAt,
+      tokenVersion: userData.tokenVersion ?? currentUser.tokenVersion
     });
 
     const result = await db.update(users)

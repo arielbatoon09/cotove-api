@@ -1,7 +1,7 @@
 import { db } from '@/config/database';
 import { tokens } from '@/database/schema/token.schema';
 import { eq, and } from 'drizzle-orm';
-import { TokenModel, TokenType } from '@/models/token-model';
+import { TokenModel, TokenType, CreateTokenInput } from '@/models/token-model';
 
 export class TokenRepository {
   async findByToken(token: string): Promise<TokenModel | null> {
@@ -25,39 +25,43 @@ export class TokenRepository {
     return tokenRecords.map(record => TokenModel.fromDB(record));
   }
   
-  async create(tokenData: {
-    userId: string;
-    token: string;
-    type: TokenType;
-    expiresAt: Date;
-    blacklisted: boolean;
-  }): Promise<TokenModel> {
+  async create(tokenData: CreateTokenInput): Promise<TokenModel> {
+    const token = new TokenModel(tokenData);
+    
     const result = await db.insert(tokens).values({
-      userId: tokenData.userId,
-      token: tokenData.token,
-      type: tokenData.type,
-      expiresAt: tokenData.expiresAt,
-      blacklisted: tokenData.blacklisted
+      userId: token.userId,
+      token: token.token,
+      type: token.type,
+      expiresAt: token.expiresAt,
+      blacklisted: token.blacklisted
     }).returning();
     
     return TokenModel.fromDB(result[0]);
   }
   
   async update(id: string, tokenData: Partial<{
-    blacklisted: boolean;
+    token: string;
+    type: string;
     expiresAt: Date;
+    blacklisted: boolean;
   }>): Promise<TokenModel> {
-    const result = await db.update(tokens)
-      .set({
-        blacklisted: tokenData.blacklisted,
-        expiresAt: tokenData.expiresAt
-      })
-      .where(eq(tokens.id, id))
-      .returning();
+    const currentToken = await db.query.tokens.findFirst({
+      where: eq(tokens.id, id)
+    });
     
-    if (!result[0]) {
+    if (!currentToken) {
       throw new Error('Token not found');
     }
+
+    const updatedToken = {
+      ...currentToken,
+      ...tokenData
+    };
+
+    const result = await db.update(tokens)
+      .set(updatedToken)
+      .where(eq(tokens.id, id))
+      .returning();
     
     return TokenModel.fromDB(result[0]);
   }
