@@ -5,7 +5,7 @@ import { relations } from "drizzle-orm";
 export const tokens = pgTable('tokens', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull().references(() => users.id),
-  token: varchar('token', { length: 255 }).notNull(),
+  token: varchar('token', { length: 250 }).notNull(),
   type: varchar('type', { length: 50 }).notNull(),
   expiresAt: timestamp('expires_at'),
   blacklisted: boolean('blacklisted').default(false),

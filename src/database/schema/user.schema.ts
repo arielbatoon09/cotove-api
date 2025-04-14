@@ -1,7 +1,7 @@
 import { pgTable, varchar, timestamp, boolean, index, uuid } from 'drizzle-orm/pg-core';
 import { otp } from './otp.schema';
 import { relations } from 'drizzle-orm';
-
+import { tokens } from './token.schema';
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: 255 }).notNull().unique(),
@@ -24,4 +24,5 @@ export const users = pgTable('users', {
 // Relations
 export const userRelations = relations(users, ({ many }) => ({
   otp: many(otp),
+  tokens: many(tokens),
 }));

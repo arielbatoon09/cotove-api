@@ -28,7 +28,7 @@ export class UserModel {
   name: string;
   email: string;
   password: string;
-  isActive: boolean;
+  isActive?: boolean;
   lastLogin?: Date;
   verifiedAt?: Date;
   createdAt?: Date;
