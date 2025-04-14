@@ -6,7 +6,6 @@ interface TokenPayload {
   userId: string;
   email: string;
   type: TokenType;
-  tokenVersion?: number;
   iat: number;
 }
 
@@ -41,12 +40,11 @@ export class TokenService {
     return this.generateToken(userId, email, TokenType.RESET_PASSWORD);
   }
 
-  public generateToken(userId: string, email: string, type: TokenType, tokenVersion?: number): string {
+  public generateToken(userId: string, email: string, type: TokenType): string {
     const payload: TokenPayload = {
       userId,
       email,
       type,
-      tokenVersion,
       iat: Math.floor(Date.now() / 1000)
     };
 

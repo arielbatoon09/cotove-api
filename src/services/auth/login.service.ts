@@ -63,15 +63,13 @@ export class LoginService {
       const accessToken = tokenService.generateToken(
         user.id!,
         user.email,
-        TokenType.ACCESS,
-        user.tokenVersion
+        TokenType.ACCESS
       );
 
       const refreshToken = tokenService.generateToken(
         user.id!,
         user.email,
-        TokenType.REFRESH,
-        user.tokenVersion
+        TokenType.REFRESH
       );
 
       // Hash and store both tokens

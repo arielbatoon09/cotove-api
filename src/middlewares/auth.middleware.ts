@@ -57,11 +57,6 @@ export class AuthMiddleware {
         throw new ApiError(401, 'User not found');
       }
 
-      // Check token version
-      if (payload.tokenVersion !== user.tokenVersion) {
-        throw new ApiError(401, 'Token has been invalidated');
-      }
-
       // Check if token is blacklisted
       const hashedToken = hashToken(token);
       const tokenRecord = await this.tokenRepository.findByToken(hashedToken);

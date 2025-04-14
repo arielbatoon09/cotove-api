@@ -3,27 +3,40 @@ import { users } from '@/database/schema/user.schema';
 import type { InferModel } from 'drizzle-orm';
 
 // Zod schema for validation
-export const createUserSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
-  email: z.string().email('Invalid email format'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  isActive: z.boolean().optional().default(true),
-  lastLogin: z.date().optional(),
-  verifiedAt: z.date().optional(),
-  tokenVersion: z.number().optional().default(0),
+export const userSchema = z.object({
+  id: z.string().uuid(),
+  email: z.string().email(),
+  password: z.string(),
+  name: z.string().nullable(),
+  isActive: z.boolean().default(true),
+  lastLogin: z.date().nullable(),
+  verifiedAt: z.date().nullable(),
+  createdAt: z.date(),
+  updatedAt: z.date()
 });
 
-export const loginUserSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+export const userCreateSchema = z.object({
+  email: z.string().email(),
+  password: z.string(),
+  name: z.string().nullable(),
+  isActive: z.boolean().default(true),
+  lastLogin: z.date().nullable().optional(),
+  verifiedAt: z.date().nullable().optional()
 });
 
-export const updateUserSchema = createUserSchema.partial().omit({ password: true });
+export const userUpdateSchema = z.object({
+  email: z.string().email().optional(),
+  password: z.string().optional(),
+  name: z.string().nullable().optional(),
+  isActive: z.boolean().optional(),
+  lastLogin: z.date().nullable().optional(),
+  verifiedAt: z.date().nullable().optional()
+});
 
-// TypeScript type derived from the schema
-export type CreateUserInput = z.infer<typeof createUserSchema>;
-export type UpdateUserInput = z.infer<typeof updateUserSchema>;
-export type LoginUserInput = z.infer<typeof loginUserSchema>;
+// TypeScript types derived from schemas
+export type User = z.infer<typeof userSchema>;
+export type CreateUserInput = z.infer<typeof userCreateSchema>;
+export type UpdateUserInput = z.infer<typeof userUpdateSchema>;
 
 // Database types from schema
 export type DBUser = InferModel<typeof users>;
@@ -34,65 +47,51 @@ export type SafeUser = Omit<DBUser, 'password'>;
 
 // User model class
 export class UserModel {
-  id?: string;
-  name: string | null;
+  id: string;
   email: string;
   password: string;
+  name: string | null;
   isActive: boolean;
   lastLogin: Date | null;
   verifiedAt: Date | null;
-  tokenVersion: number;
   createdAt: Date;
   updatedAt: Date;
 
-  constructor(data: CreateUserInput) {
-    this.name = data.name;
+  constructor(data: User) {
+    this.id = data.id;
     this.email = data.email;
     this.password = data.password;
-    this.isActive = data.isActive ?? true;
-    this.lastLogin = data.lastLogin ?? null;
-    this.verifiedAt = data.verifiedAt ?? null;
-    this.tokenVersion = data.tokenVersion ?? 0;
-    this.createdAt = new Date();
-    this.updatedAt = new Date();
+    this.name = data.name;
+    this.isActive = data.isActive;
+    this.lastLogin = data.lastLogin;
+    this.verifiedAt = data.verifiedAt;
+    this.createdAt = data.createdAt;
+    this.updatedAt = data.updatedAt;
   }
 
   // Convert to database format
-  toDB(): NewDBUser {
+  toDB(): User {
     return {
+      id: this.id,
       email: this.email,
       password: this.password,
       name: this.name,
       isActive: this.isActive,
       lastLogin: this.lastLogin,
       verifiedAt: this.verifiedAt,
-      tokenVersion: this.tokenVersion,
       createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-      ...(this.id && { id: this.id })
+      updatedAt: this.updatedAt
     };
   }
 
   // Create from database record
-  static fromDB(data: DBUser): UserModel {
-    const user = new UserModel({
-      name: data.name || '',
-      email: data.email,
-      password: data.password,
-      isActive: data.isActive || true,
-      tokenVersion: data.tokenVersion || 0
-    });
-    user.id = data.id;
-    user.lastLogin = data.lastLogin;
-    user.verifiedAt = data.verifiedAt;
-    user.createdAt = data.createdAt;
-    user.updatedAt = data.updatedAt;
-    return user;
+  static fromDB(data: User): UserModel {
+    return new UserModel(data);
   }
 
   // Get safe user object (without password)
-  toSafeJSON(): SafeUser {
-    const { password, ...safeUser } = this.toDB();
-    return safeUser as SafeUser;
+  toSafeJSON(): Omit<User, 'password'> {
+    const { password, ...safeData } = this.toDB();
+    return safeData;
   }
 }
