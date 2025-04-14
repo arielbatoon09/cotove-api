@@ -10,7 +10,10 @@ export class UserRepository {
     });
     
     if (!user) return null;
-    return UserModel.fromDB(user);
+    return UserModel.fromDB({
+      ...user,
+      isActive: user.isActive ?? true
+    });
   }
   
   async findById(id: string): Promise<UserModel | null> {
@@ -19,14 +22,30 @@ export class UserRepository {
     });
     
     if (!user) return null;
-    return UserModel.fromDB(user);
+    return UserModel.fromDB({
+      ...user,
+      isActive: user.isActive ?? true
+    });
   }
   
   async create(userData: CreateUserInput): Promise<UserModel> {
-    const user = new UserModel(userData);
+    const user = new UserModel({
+      id: crypto.randomUUID(),
+      email: userData.email,
+      password: userData.password,
+      name: userData.name ?? null,
+      isActive: userData.isActive ?? true,
+      lastLogin: null,
+      verifiedAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
     
     const result = await db.insert(users).values(user.toDB()).returning();
-    return UserModel.fromDB(result[0]);
+    return UserModel.fromDB({
+      ...result[0],
+      isActive: result[0].isActive ?? true
+    });
   }
   
   async update(id: string, userData: Partial<{
@@ -36,7 +55,6 @@ export class UserRepository {
     isActive: boolean;
     lastLogin: Date;
     verifiedAt: Date;
-    tokenVersion: number;
   }>): Promise<UserModel> {
     const currentUser = await this.findById(id);
     if (!currentUser) {
@@ -50,8 +68,7 @@ export class UserRepository {
       name: userData.name ?? currentUser.name,
       isActive: userData.isActive ?? currentUser.isActive,
       lastLogin: userData.lastLogin ?? currentUser.lastLogin,
-      verifiedAt: userData.verifiedAt ?? currentUser.verifiedAt,
-      tokenVersion: userData.tokenVersion ?? currentUser.tokenVersion
+      verifiedAt: userData.verifiedAt ?? currentUser.verifiedAt
     });
 
     const result = await db.update(users)
@@ -59,6 +76,9 @@ export class UserRepository {
       .where(eq(users.id, id))
       .returning();
     
-    return UserModel.fromDB(result[0]);
+    return UserModel.fromDB({
+      ...result[0],
+      isActive: result[0].isActive ?? true
+    });
   }
 } 

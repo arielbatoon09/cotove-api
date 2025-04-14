@@ -47,18 +47,9 @@ export class LogoutService {
         }
       }
 
-      // Increment token version to invalidate all tokens
-      const user = await this.userRepository.findById(payload.userId);
-      if (!user) {
-        throw new ApiError(404, 'User not found');
-      }
-
-      await this.userRepository.update(payload.userId, {
-        tokenVersion: user.tokenVersion + 1
-      });
-      logger.info(`Token version incremented for user ${payload.userId}`);
+      logger.info(`User ${payload.userId} logged out successfully`);
     } catch (error) {
-      logger.error('Logout failed:', error);
+      logger.error('Logout error:', error);
       if (error instanceof ApiError) {
         throw error;
       }

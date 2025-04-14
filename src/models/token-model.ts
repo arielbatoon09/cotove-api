@@ -71,15 +71,15 @@ export class TokenModel {
   // Method to create from database record
   static fromDB(data: any): TokenModel {
     const token = new TokenModel({
-      userId: data.user_id,
+      userId: data.user_id || data.userId,
       token: data.token,
       type: data.type as TokenType,
-      expiresAt: data.expires_at,
+      expiresAt: data.expires_at || data.expiresAt,
       blacklisted: data.blacklisted,
     });
     token.id = data.id;
-    token.createdAt = data.created_at;
-    token.updatedAt = data.updated_at;
+    token.createdAt = data.created_at || data.createdAt;
+    token.updatedAt = data.updated_at || data.updatedAt;
     return token;
   }
 

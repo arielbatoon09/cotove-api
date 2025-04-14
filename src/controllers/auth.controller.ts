@@ -85,14 +85,23 @@ export class AuthController {
 
   verifyEmail: RequestHandler = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { token } = req.body;
+      const { token, type, redirect_to } = req.query;
       
+      if (!token || typeof token !== 'string') {
+        throw new ApiError(400, 'Verification token is required');
+      }
+
+      if (!type || typeof type !== 'string') {
+        throw new ApiError(400, 'Token type is required');
+      }
+
       await verifyEmailService.execute(token);
 
       res.json({ 
         message: 'Email verified successfully'
       });
     } catch (error) {
+
       if (error instanceof ApiError) {
         res.status(error.statusCode).json({ 
           message: error.message,

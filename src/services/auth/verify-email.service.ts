@@ -17,6 +17,14 @@ export class VerifyEmailService {
         throw new ApiError(400, 'Verification token is required');
       }
 
+      // First verify the token signature
+      const payload = tokenService.verifyToken(token, TokenType.EMAIL_VERIFICATION);
+      if (!payload) {
+        throw new ApiError(400, 'Invalid verification token');
+      }
+
+      console.log('Token payload:', payload);
+
       // Hash the token for database lookup
       const hashedToken = hashToken(token);
 
@@ -25,6 +33,8 @@ export class VerifyEmailService {
       if (!tokenRecord) {
         throw new ApiError(400, 'Invalid verification token');
       }
+
+      console.log('Token record:', tokenRecord);
 
       // Check if token is blacklisted
       if (tokenRecord.blacklisted) {
@@ -36,14 +46,12 @@ export class VerifyEmailService {
         throw new ApiError(400, 'Verification token has expired');
       }
 
-      // Verify the token signature
-      const payload = tokenService.verifyToken(token, TokenType.EMAIL_VERIFICATION);
-      if (!payload) {
-        throw new ApiError(400, 'Invalid verification token');
-      }
-
       // Verify the payload matches the stored token
       if (payload.userId !== tokenRecord.userId) {
+        console.log('Token userId mismatch:', {
+          payloadUserId: payload.userId,
+          tokenRecordUserId: tokenRecord.userId
+        });
         throw new ApiError(400, 'Invalid verification token');
       }
 

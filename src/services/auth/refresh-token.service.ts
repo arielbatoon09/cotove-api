@@ -67,8 +67,7 @@ export class RefreshTokenService {
       const newAccessToken = tokenService.generateToken(
         payload.userId, 
         payload.email, 
-        TokenType.ACCESS,
-        user.tokenVersion
+        TokenType.ACCESS
       );
 
       // Hash and store the new access token
