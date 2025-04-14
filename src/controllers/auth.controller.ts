@@ -18,7 +18,7 @@ export class AuthController {
     private tokenRepository: TokenRepository
   ) {
     this.loginService = new LoginService(this.userRepository, this.tokenRepository);
-    this.refreshTokenService = new RefreshTokenService(this.tokenRepository);
+    this.refreshTokenService = new RefreshTokenService(this.tokenRepository, this.userRepository);
   }
 
   login: RequestHandler = async (req: Request, res: Response): Promise<void> => {
