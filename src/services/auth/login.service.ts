@@ -59,14 +59,6 @@ export class LoginService {
         throw new ApiError(500, 'User data is incomplete');
       }
 
-      // Get and blacklist any existing refresh tokens for this user
-      const existingTokens = await this.tokenRepository.findByUserIdAndType(user.id, TokenType.REFRESH);
-      for (const token of existingTokens) {
-        if (token.id) {
-          await this.tokenRepository.update(token.id, { blacklisted: true });
-        }
-      }
-
       // Generate tokens
       const accessToken = tokenService.generateToken(
         user.id!,
@@ -82,11 +74,23 @@ export class LoginService {
         user.tokenVersion
       );
 
-      // Hash and store refresh token
-      const hashedToken = hashToken(refreshToken);
+      // Hash and store both tokens
+      const hashedAccessToken = hashToken(accessToken);
+      const hashedRefreshToken = hashToken(refreshToken);
+
+      // Store access token
       await this.tokenRepository.create({
         userId: user.id!,
-        token: hashedToken,
+        token: hashedAccessToken,
+        type: TokenType.ACCESS,
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
+        blacklisted: false
+      });
+
+      // Store refresh token
+      await this.tokenRepository.create({
+        userId: user.id!,
+        token: hashedRefreshToken,
         type: TokenType.REFRESH,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
         blacklisted: false
@@ -114,4 +118,10 @@ export class LoginService {
       throw new ApiError(500, 'Failed to login');
     }
   }
-} 
+}
+
+// Export a singleton instance
+export const loginService = new LoginService(
+  new UserRepository(),
+  new TokenRepository()
+); 

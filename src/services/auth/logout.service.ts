@@ -12,7 +12,7 @@ export class LogoutService {
     private userRepository: UserRepository
   ) {}
 
-  async execute(refreshToken: string): Promise<void> {
+  async execute(refreshToken: string, accessToken?: string): Promise<void> {
     try {
       if (!refreshToken) {
         throw new ApiError(400, 'Refresh token is required');
@@ -24,27 +24,44 @@ export class LogoutService {
         throw new ApiError(401, 'Invalid refresh token');
       }
 
-      // Hash the token
-      const hashedToken = hashToken(refreshToken);
+      // Hash the tokens
+      const hashedRefreshToken = hashToken(refreshToken);
+      const hashedAccessToken = accessToken ? hashToken(accessToken) : null;
 
-      // Find and blacklist the token
-      const tokenRecord = await this.tokenRepository.findByToken(hashedToken);
-      if (!tokenRecord) {
-        logger.warn(`Token not found for user ${payload.userId}`);
+      // Find and blacklist the refresh token
+      const refreshTokenRecord = await this.tokenRepository.findByToken(hashedRefreshToken);
+      if (!refreshTokenRecord) {
+        logger.warn(`Refresh token not found for user ${payload.userId}`);
         throw new ApiError(404, 'Token not found');
       }
 
-      await this.tokenRepository.update(tokenRecord.id!, { blacklisted: true });
-      logger.info(`Token blacklisted for user ${payload.userId}`);
+      await this.tokenRepository.update(refreshTokenRecord.id!, { blacklisted: true });
+      logger.info(`Refresh token blacklisted for user ${payload.userId}`);
 
-      // Get current user
-      const user = await this.userRepository.findById(payload.userId);
-      if (!user) {
-        logger.error(`User not found: ${payload.userId}`);
-        throw new ApiError(404, 'User not found');
+      // Blacklist all active access tokens for this user
+      const activeAccessTokens = await this.tokenRepository.findByUserIdAndType(payload.userId, TokenType.ACCESS);
+      for (const token of activeAccessTokens) {
+        if (!token.blacklisted) {
+          await this.tokenRepository.update(token.id!, { blacklisted: true });
+          logger.info(`Access token ${token.id} blacklisted for user ${payload.userId}`);
+        }
+      }
+
+      // If a specific access token was provided, ensure it's blacklisted
+      if (hashedAccessToken) {
+        const accessTokenRecord = await this.tokenRepository.findByToken(hashedAccessToken);
+        if (accessTokenRecord && !accessTokenRecord.blacklisted) {
+          await this.tokenRepository.update(accessTokenRecord.id!, { blacklisted: true });
+          logger.info(`Specific access token blacklisted for user ${payload.userId}`);
+        }
       }
 
       // Increment token version to invalidate all tokens
+      const user = await this.userRepository.findById(payload.userId);
+      if (!user) {
+        throw new ApiError(404, 'User not found');
+      }
+
       await this.userRepository.update(payload.userId, {
         tokenVersion: user.tokenVersion + 1
       });

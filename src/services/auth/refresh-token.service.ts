@@ -59,42 +59,34 @@ export class RefreshTokenService {
       // Check if token has expired
       if (token.expiresAt < new Date()) {
         logger.error('Token has expired:', token.id);
+        await this.tokenRepository.update(token.id!, { blacklisted: true });
         throw new ApiError(401, 'Refresh token has expired');
       }
 
-      // Blacklist the current refresh token
-      await this.tokenRepository.update(token.id!, { blacklisted: true });
-      logger.info(`Blacklisted token: ${token.id}`);
-
-      // Generate new tokens with the user's token version
+      // Generate new access token
       const newAccessToken = tokenService.generateToken(
         payload.userId, 
         payload.email, 
         TokenType.ACCESS,
         user.tokenVersion
       );
-      const newRefreshToken = tokenService.generateToken(
-        payload.userId, 
-        payload.email, 
-        TokenType.REFRESH,
-        user.tokenVersion
-      );
-      
-      // Hash the new refresh token before storing
-      const hashedNewRefreshToken = hashToken(newRefreshToken);
-      
-      // Store new refresh token
+
+      // Hash and store the new access token
+      const hashedAccessToken = hashToken(newAccessToken);
       await this.tokenRepository.create({
         userId: payload.userId,
-        token: hashedNewRefreshToken,
-        type: TokenType.REFRESH,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        token: hashedAccessToken,
+        type: TokenType.ACCESS,
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
         blacklisted: false
       });
 
+      logger.info(`New access token generated for user ${payload.userId}`);
+
+      // Return the new access token and the same refresh token
       return {
         accessToken: newAccessToken,
-        refreshToken: newRefreshToken
+        refreshToken: refreshToken // Return the same refresh token
       };
     } catch (error) {
       logger.error('Refresh token service error:', error);

@@ -3,7 +3,10 @@ import { ApiError } from '@/utils/api-error';
 import { TokenType } from '@/models/token-model';
 import { UserModel } from '@/models/user-model';
 import { UserRepository } from '@/repositories/user.repository';
+import { TokenRepository } from '@/repositories/token.repository';
 import tokenService from '@/services/auth/token.service';
+import { hashToken } from '@/utils/hash';
+import { logger } from '@/config/logger';
 
 // Extend Express Request type to include user
 declare global {
@@ -16,9 +19,11 @@ declare global {
 
 export class AuthMiddleware {
   private userRepository: UserRepository;
+  private tokenRepository: TokenRepository;
 
   constructor() {
     this.userRepository = new UserRepository();
+    this.tokenRepository = new TokenRepository();
   }
 
   authenticate = async (req: Request, res: Response, next: NextFunction) => {
@@ -57,6 +62,21 @@ export class AuthMiddleware {
         throw new ApiError(401, 'Token has been invalidated');
       }
 
+      // Check if token is blacklisted
+      const hashedToken = hashToken(token);
+      const tokenRecord = await this.tokenRepository.findByToken(hashedToken);
+      if (!tokenRecord) {
+        throw new ApiError(401, 'Token not found in database');
+      }
+      if (tokenRecord.blacklisted) {
+        throw new ApiError(401, 'Token has been revoked');
+      }
+
+      // Check if token has expired
+      if (tokenRecord.expiresAt < new Date()) {
+        throw new ApiError(401, 'Token has expired');
+      }
+
       // Check if user is active
       if (!user.isActive) {
         throw new ApiError(403, 'User account is deactivated');
@@ -73,7 +93,7 @@ export class AuthMiddleware {
           error: error.name
         });
       } else {
-        console.error('Auth middleware error:', error);
+        logger.error('Auth middleware error:', error);
         res.status(500).json({
           message: 'An unexpected error occurred during authentication',
           error: 'InternalServerError'
