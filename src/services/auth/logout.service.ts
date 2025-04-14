@@ -38,21 +38,12 @@ export class LogoutService {
       await this.tokenRepository.update(refreshTokenRecord.id!, { blacklisted: true });
       logger.info(`Refresh token blacklisted for user ${payload.userId}`);
 
-      // Blacklist all active access tokens for this user
-      const activeAccessTokens = await this.tokenRepository.findByUserIdAndType(payload.userId, TokenType.ACCESS);
-      for (const token of activeAccessTokens) {
-        if (!token.blacklisted) {
-          await this.tokenRepository.update(token.id!, { blacklisted: true });
-          logger.info(`Access token ${token.id} blacklisted for user ${payload.userId}`);
-        }
-      }
-
-      // If a specific access token was provided, ensure it's blacklisted
+      // If access token is provided, blacklist only that specific token
       if (hashedAccessToken) {
         const accessTokenRecord = await this.tokenRepository.findByToken(hashedAccessToken);
         if (accessTokenRecord && !accessTokenRecord.blacklisted) {
           await this.tokenRepository.update(accessTokenRecord.id!, { blacklisted: true });
-          logger.info(`Specific access token blacklisted for user ${payload.userId}`);
+          logger.info(`Access token blacklisted for user ${payload.userId}`);
         }
       }
 
