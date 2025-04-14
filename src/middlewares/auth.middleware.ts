@@ -1,72 +1,69 @@
 import { Request, Response, NextFunction } from 'express';
-import { TokenService } from '../services/token.service';
-import { ApiError } from '../utils/api-error';
-import { TokenType } from '../models/token-model';
+import { ApiError } from '@/utils/api-error';
+import tokenService from '@/services/token';
+import { TokenType } from '@/models/token-model';
+import { UserModel } from '@/models/user-model';
+import userService from '@/services/user';
 
+// Extend Express Request type to include user
 declare global {
   namespace Express {
     interface Request {
-      user?: {
-        userId: string;
-        email: string;
-      };
+      user?: UserModel;
     }
   }
 }
 
-export const authenticate = (req: Request, res: Response, next: NextFunction) => {
+export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    // Get authorization header
     const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      throw new ApiError(401, 'No token provided');
+    if (!authHeader) {
+      throw new ApiError(401, 'Authorization header is missing');
     }
 
-    const token = authHeader.split(' ')[1];
-    const tokenService = new TokenService();
+    // Check if it's a Bearer token
+    const [bearer, token] = authHeader.split(' ');
+    if (bearer !== 'Bearer' || !token) {
+      throw new ApiError(401, 'Invalid authorization format. Use Bearer token');
+    }
+
+    // Verify the access token and ensure it's an access token
+    const payload = await tokenService.verifyToken(token, TokenType.ACCESS);
     
-    // Verify token signature and expiration
-    const payload = tokenService.verifyToken(token);
-    
-    // Check if token is an access token
+    // Double check the token type from payload
     if (payload.type !== TokenType.ACCESS) {
-      throw new ApiError(401, 'Invalid token type');
+      throw new ApiError(401, 'Invalid token type. Access token required');
+    }
+    
+    // Get user from database
+    const user = await userService.getUserById(payload.userId);
+    if (!user) {
+      throw new ApiError(401, 'User not found');
     }
 
-    // Attach user info to request
-    req.user = {
-      userId: payload.userId,
-      email: payload.email,
-    };
+    // Check if user is active
+    if (!user.isActive) {
+      throw new ApiError(403, 'User account is deactivated');
+    }
 
+    // Attach user to request object
+    req.user = user;
+    
     next();
   } catch (error) {
     if (error instanceof ApiError) {
-      next(error);
+      res.status(error.statusCode).json({
+        message: error.message,
+        error: error.name
+      });
     } else {
-      next(new ApiError(401, 'Invalid or expired token'));
+      console.error('Auth middleware error:', error);
+      res.status(500).json({
+        message: 'An unexpected error occurred during authentication',
+        error: 'InternalServerError'
+      });
     }
   }
 };
 
-export const requireVerifiedEmail = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    // First authenticate the user
-    authenticate(req, res, async (err) => {
-      if (err) {
-        return next(err);
-      }
-
-      // Check if user has verified email
-      const userService = (await import('../services/user.service')).default;
-      const user = await userService.getUserById(req.user!.userId);
-      
-      if (!user?.isEmailVerified) {
-        return next(new ApiError(403, 'Email verification required'));
-      }
-      
-      next();
-    });
-  } catch (error) {
-    next(error);
-  }
-}; 

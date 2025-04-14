@@ -1,4 +1,4 @@
-import { verify, JwtPayload } from 'jsonwebtoken';
+import { verify, JwtPayload, TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
 import { db } from '@/config/database';
 import { tokens } from '@/database/schema/token.schema';
 import { eq, and, gt } from 'drizzle-orm';
@@ -24,7 +24,12 @@ export const verifyToken = async (token: string, type: TokenType): Promise<Token
     // First verify JWT
     const decoded = verify(token, JWT_SECRET) as JwtPayload & TokenPayload;
     
-    // Then check database
+    // For access tokens, we only verify the JWT
+    if (type === TokenType.ACCESS) {
+      return decoded;
+    }
+    
+    // For other token types, check database
     const dbToken = await db.select().from(tokens).where(
       and(
         eq(tokens.token, token),
@@ -56,6 +61,12 @@ export const verifyToken = async (token: string, type: TokenType): Promise<Token
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;
+    }
+    if (error instanceof TokenExpiredError) {
+      throw new ApiError(401, 'Token has expired');
+    }
+    if (error instanceof JsonWebTokenError) {
+      throw new ApiError(401, 'Invalid token');
     }
     throw new ApiError(401, 'Invalid token');
   }

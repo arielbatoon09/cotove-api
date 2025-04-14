@@ -106,10 +106,17 @@ export class AuthController {
       // Store refresh token
       await tokenService.storeRefreshToken(user.id!, refreshToken);
 
+      // Set refresh token as HTTP-only cookie
+      res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict',
+        maxAge: this.parseExpiryToMilliseconds(process.env.REFRESH_TOKEN_EXPIRY)
+      });
+
       res.json({
         message: 'Login successful',
         accessToken,
-        refreshToken,
         user: {
           id: user.id,
           email: user.email,
@@ -172,7 +179,7 @@ export class AuthController {
 
   refreshToken: RequestHandler = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { refreshToken } = req.body;
+      const refreshToken = req.cookies.refreshToken;
       
       if (!refreshToken) {
         throw new ApiError(400, 'Refresh token is required');
@@ -193,10 +200,17 @@ export class AuthController {
       // Store new refresh token
       await tokenService.storeRefreshToken(payload.userId, newRefreshToken);
 
+      // Set new refresh token as HTTP-only cookie
+      res.cookie('refreshToken', newRefreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: this.parseExpiryToMilliseconds(process.env.REFRESH_TOKEN_EXPIRY)
+      });
+
       res.json({
         message: 'Token refreshed successfully',
-        accessToken,
-        refreshToken: newRefreshToken
+        accessToken
       });
     } catch (error) {
       if (error instanceof ApiError) {
@@ -289,7 +303,7 @@ export class AuthController {
 
   logout: RequestHandler = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { refreshToken } = req.body;
+      const refreshToken = req.cookies.refreshToken;
       
       if (!refreshToken) {
         throw new ApiError(400, 'Refresh token is required');
@@ -297,6 +311,9 @@ export class AuthController {
       
       // Blacklist refresh token
       await tokenService.blacklistToken(refreshToken);
+
+      // Clear refresh token cookie
+      res.clearCookie('refreshToken');
 
       res.json({ message: 'Logged out successfully' });
     } catch (error) {
@@ -314,4 +331,30 @@ export class AuthController {
       }
     }
   };
+
+  private parseExpiryToMilliseconds(expiry: string | undefined): number {
+    if (!expiry) {
+      throw new ApiError(500, 'REFRESH_TOKEN_EXPIRY environment variable is not set');
+    }
+
+    const unit = expiry.slice(-1);
+    const value = parseInt(expiry.slice(0, -1));
+    
+    if (isNaN(value)) {
+      throw new ApiError(500, 'Invalid REFRESH_TOKEN_EXPIRY format');
+    }
+    
+    switch (unit) {
+      case 'd':
+        return value * 24 * 60 * 60 * 1000; // days to milliseconds
+      case 'h':
+        return value * 60 * 60 * 1000; // hours to milliseconds
+      case 'm':
+        return value * 60 * 1000; // minutes to milliseconds
+      case 's':
+        return value * 1000; // seconds to milliseconds
+      default:
+        throw new ApiError(500, 'Invalid time unit in REFRESH_TOKEN_EXPIRY. Use d, h, m, or s');
+    }
+  }
 }
