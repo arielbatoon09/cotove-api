@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { ApiError } from '../utils/api-error';
-import { logger } from '../config/logger';
+import { ApiError } from '@/utils/api-error';
+import { logger } from '@/config/logger';
 import status from 'http-status';
 import { v4 as uuidv4 } from 'uuid';
 import { ZodError } from 'zod';
@@ -24,13 +24,67 @@ export const requestId = (req: Request, res: Response, next: NextFunction): void
 
 /**
  * Global error handler middleware
+ * Handles both operational (ApiError) and programming errors
+ */
+export const errorHandler = (
+  err: Error,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  // Log the error
+  logger.error('Error:', {
+    error: err,
+    requestId: req.id,
+    path: req.path,
+    method: req.method,
+    body: req.body,
+    query: req.query,
+    params: req.params,
+    user: req.user,
+    stack: err.stack
+  });
+
+  // Handle ApiError (operational errors)
+  if (err instanceof ApiError) {
+    return res.status(err.statusCode).json({
+      success: false,
+      message: err.message,
+      error: err.name,
+      requestId: err.requestId || req.id,
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    });
+  }
+
+  // Handle programming errors (unexpected errors)
+  return res.status(500).json({
+    success: false,
+    message: 'An unexpected error occurred',
+    error: 'InternalServerError',
+    requestId: req.id,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+};
+
+/**
+ * Async handler wrapper to catch async errors
+ * Usage: wrap(async (req, res, next) => { ... })
+ */
+export const asyncHandler = (fn: Function) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+};
+
+/**
+ * Global error handler middleware
  * 
  * @param {Error} err - The error object
  * @param {Request} req - Express request object
  * @param {Response} res - Express response object
  * @param {NextFunction} next - Express next function
  */
-export const errorHandler = (
+export const errorHandlerOld = (
   err: Error,
   req: Request,
   res: Response,
