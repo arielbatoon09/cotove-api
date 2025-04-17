@@ -13,15 +13,18 @@ export class AuthController {
     
     const result = await authServices.loginService.execute({ email, password });
     
-    // Set refresh token in HTTP-only cookie
-    setHttpOnlyCookie(res, 'refreshToken', result.refreshToken, {
-      maxAge: authServices.loginService['tokenService'].getExpiresIn(TokenType.REFRESH) * 1000
-    });
+    // // (Temporarily Removed) Set refresh token in HTTP-only cookie
+    // setHttpOnlyCookie(res, 'refreshToken', result.refreshToken, {
+    //   maxAge: authServices.loginService['tokenService'].getExpiresIn(TokenType.REFRESH) * 1000
+    // });
     
     return successHandler({
       message: 'Login successful',
-      user: result.user,
-      accessToken: result.accessToken
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      expiresIn: result.expiresIn,
+      expiresAt: result.expiresAt,
+      details: result.user,
     }, req, res);
   });
 

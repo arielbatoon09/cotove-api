@@ -19,6 +19,8 @@ interface LoginResult {
   };
   refreshToken: string;
   accessToken: string;
+  expiresIn: number;  // seconds until expiration
+  expiresAt: number;  // Unix timestamp in seconds
 }
 
 export class LoginService {
@@ -76,15 +78,19 @@ export class LoginService {
         TokenType.ACCESS
       );
 
-      // Get expiration time from token service
+      // Get expiration time from token service (in seconds)
       const refreshTokenExpiresIn = this.tokenService.getExpiresIn(TokenType.REFRESH);
+      
+      // Calculate refresh token expiration timestamp (in seconds)
+      const now = Math.floor(Date.now() / 1000);
+      const refreshTokenExpiresAt = now + refreshTokenExpiresIn;
 
       // Store refresh token only in the database
       await this.tokenRepository.create({
         userId: user.id!,
         token: refreshToken,
         type: TokenType.REFRESH,
-        expiresAt: new Date(Date.now() + refreshTokenExpiresIn * 1000),
+        expiresAt: new Date(refreshTokenExpiresAt * 1000), // Convert to milliseconds for Date
         blacklisted: false
       });
 
@@ -101,7 +107,9 @@ export class LoginService {
           isActive: user.isActive
         },
         refreshToken,
-        accessToken
+        accessToken,
+        expiresIn: refreshTokenExpiresIn,
+        expiresAt: refreshTokenExpiresAt
       };
     } catch (error) {
       if (error instanceof ApiError) {
