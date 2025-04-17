@@ -22,7 +22,8 @@ export class AuthController {
     
     return successHandler({
       message: 'Login successful',
-      user: result.user
+      user: result.user,
+      accessToken: result.accessToken
     }, req, res);
   });
 
