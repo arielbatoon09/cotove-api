@@ -2,7 +2,7 @@ import { ApiError } from '@/utils/api-error';
 import { UserRepository } from '@/repositories/user.repository';
 import { TokenRepository } from '@/repositories/token.repository';
 import { TokenService } from '@/services/auth/token.service';
-import { TokenType } from '@/models/token-model';
+import { TokenType, isTokenExpired } from '@/models/token-model';
 import { hashPassword } from '@/utils/hash';
 
 export class PasswordResetService {
@@ -62,7 +62,7 @@ export class PasswordResetService {
       }
 
       // Check if token has expired
-      if (tokenRecord.expiresAt < new Date()) {
+      if (isTokenExpired(tokenRecord)) {
         throw new ApiError(400, 'Password reset token has expired');
       }
       

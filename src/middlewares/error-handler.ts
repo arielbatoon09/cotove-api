@@ -23,6 +23,16 @@ export const requestId = (req: Request, res: Response, next: NextFunction): void
 };
 
 /**
+ * Format Zod validation errors into a clean message
+ */
+const formatZodError = (error: ZodError): string => {
+  return error.errors.map(err => {
+    const field = err.path.join('.');
+    return `${field}: ${err.message}`;
+  }).join(', ');
+};
+
+/**
  * Global error handler middleware
  * Handles both operational (ApiError) and programming errors
  */
@@ -32,37 +42,75 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  // Log the error
+  // Ensure request ID exists
+  if (!req.id) {
+    req.id = uuidv4();
+  }
+
+  // Log the error for debugging
   logger.error('Error:', {
     error: err,
     requestId: req.id,
     path: req.path,
     method: req.method,
-    body: req.body,
-    query: req.query,
-    params: req.params,
-    user: req.user,
     stack: err.stack
   });
+
+  const timestamp = new Date().toISOString();
+  // Check if path already includes /api/v1
+  const path = req.path.startsWith('/api/v1') ? req.path : `/api/v1${req.path}`;
 
   // Handle ApiError (operational errors)
   if (err instanceof ApiError) {
     return res.status(err.statusCode).json({
-      success: false,
-      message: err.message,
-      error: err.name,
-      requestId: err.requestId || req.id,
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+      status: 'error',
+      statusCode: err.statusCode,
+      data: {
+        code: err.name,
+        message: err.message,
+        details: err.details ? JSON.parse(err.details) : 'No additional details available',
+        timestamp,
+        path
+      },
+      requestId: req.id,
+      documentation_url: 'https://api.example.com/docs/errors'
+    });
+  }
+
+  // Handle Zod validation errors
+  if (err instanceof ZodError) {
+    return res.status(status.BAD_REQUEST).json({
+      status: 'error',
+      statusCode: status.BAD_REQUEST,
+      data: {
+        code: 'VALIDATION_ERROR',
+        message: 'Invalid input data',
+        details: err.errors.map(err => ({
+          field: err.path.join('.'),
+          message: err.message,
+          code: err.code
+        })),
+        timestamp,
+        path
+      },
+      requestId: req.id,
+      documentation_url: 'https://api.example.com/docs/errors#VALIDATION_ERROR'
     });
   }
 
   // Handle programming errors (unexpected errors)
   return res.status(500).json({
-    success: false,
-    message: 'An unexpected error occurred',
-    error: 'InternalServerError',
+    status: 'error',
+    statusCode: 500,
+    data: {
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Something went wrong. Please try again later.',
+      details: 'An unexpected error occurred on the server',
+      timestamp,
+      path
+    },
     requestId: req.id,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    documentation_url: 'https://api.example.com/docs/errors#INTERNAL_SERVER_ERROR'
   });
 };
 
@@ -74,91 +122,4 @@ export const asyncHandler = (fn: Function) => {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
-};
-
-/**
- * Global error handler middleware
- * 
- * @param {Error} err - The error object
- * @param {Request} req - Express request object
- * @param {Response} res - Express response object
- * @param {NextFunction} next - Express next function
- */
-export const errorHandlerOld = (
-  err: Error,
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
-  // Log the error with request ID if available
-  const requestId = req.id;
-  logger.error('Error occurred:', {
-    error: err.message,
-    stack: err.stack,
-    requestId,
-    path: req.path,
-    method: req.method
-  });
-  
-  // Handle API errors
-  if (err instanceof ApiError) {
-    res.status(err.statusCode).json({
-      status: 'error',
-      message: err.message,
-      requestId: err.requestId || requestId
-    });
-    return;
-  }
-  
-  // Handle Zod validation errors
-  if (err instanceof ZodError) {
-    res.status(status.BAD_REQUEST).json({
-      status: 'error',
-      message: 'Validation error',
-      errors: err.errors.map(error => ({
-        field: error.path.join('.'),
-        message: error.message
-      })),
-      requestId
-    });
-    return;
-  }
-  
-  // Handle validation errors
-  if (err.name === 'ValidationError') {
-    res.status(status.BAD_REQUEST).json({
-      status: 'error',
-      message: err.message,
-      requestId
-    });
-    return;
-  }
-  
-  // Handle database errors
-  if (err.name === 'PostgresError' || err.name === 'DatabaseError') {
-    // Check for unique constraint violations
-    if (err.message.includes('duplicate key')) {
-      res.status(status.CONFLICT).json({
-        status: 'error',
-        message: 'Resource already exists',
-        requestId
-      });
-      return;
-    }
-    
-    // Handle other database errors
-    res.status(status.INTERNAL_SERVER_ERROR).json({
-      status: 'error',
-      message: 'Database error',
-      requestId
-    });
-    return;
-  }
-  
-  // Handle unknown errors
-  res.status(status.INTERNAL_SERVER_ERROR).json({
-    status: 'error',
-    message: 'Internal server error',
-    requestId
-  });
 }; 

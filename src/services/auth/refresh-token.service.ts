@@ -1,7 +1,7 @@
 import { ApiError } from '@/utils/api-error';
 import { TokenRepository } from '@/repositories/token.repository';
 import { UserRepository } from '@/repositories/user.repository';
-import { TokenType } from '@/models/token-model';
+import { TokenType, isTokenExpired } from '@/models/token-model';
 import { TokenService } from '@/services/auth/token.service';
 import { logger } from '@/config/logger';
 
@@ -56,7 +56,7 @@ export class RefreshTokenService {
       }
 
       // Check if token has expired
-      if (token.expiresAt < new Date()) {
+      if (isTokenExpired(token)) {
         logger.error('Token has expired:', token.id);
         await this.tokenRepository.update(token.id!, { blacklisted: true });
         throw new ApiError(401, 'Refresh token has expired');

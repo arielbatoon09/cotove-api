@@ -1,6 +1,7 @@
 import { Request, Response, RequestHandler } from 'express';
 import { ApiError } from '@/utils/api-error';
 import { asyncHandler } from '@/middlewares/error-handler';
+import { successHandler } from '@/middlewares/success-handler';
 import { authServices } from '@/services/auth';
 import { TokenType } from '@/models/token-model';
 
@@ -19,11 +20,10 @@ export class AuthController {
       maxAge: authServices.loginService['tokenService'].getExpiresIn(TokenType.REFRESH) * 1000
     });
     
-    res.json({
+    return successHandler({
       message: 'Login successful',
-      user: result.user,
-      accessToken: result.accessToken,
-    });
+      user: result.user
+    }, req, res);
   });
 
   // Signup Handler
@@ -31,11 +31,11 @@ export class AuthController {
     const { email, password, name } = req.body;
     const result = await authServices.signupService.signup(email, password, name);
     
-    res.status(201).json({
+    return successHandler({
       message: 'User created successfully. Please verify your email.',
       user: result.user,
       verificationToken: result.verificationToken
-    });
+    }, req, res, 201);
   });
 
   // Verify Email Handler
@@ -51,9 +51,9 @@ export class AuthController {
 
     await authServices.verifyEmailService.execute(token);
 
-    res.json({ 
+    return successHandler({
       message: 'Email verified successfully'
-    });
+    }, req, res);
   });
 
   // Refresh Token Handler
@@ -64,28 +64,19 @@ export class AuthController {
     }
     const result = await authServices.refreshTokenService.execute(refreshToken);
 
-    // Set refresh token in HTTP-only cookie
-    res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: authServices.loginService['tokenService'].getExpiresIn(TokenType.REFRESH) * 1000
-    });
-
-    res.json({
-      success: true,
+    return successHandler({
       message: 'Token refreshed successfully',
-      data: {
-        accessToken: result.accessToken
-      }
-    });
+      accessToken: result.accessToken
+    }, req, res);
   });
 
   // Request Password Reset Handler
   requestPasswordReset: RequestHandler = asyncHandler(async (req: Request, res: Response) => {
     const { email } = req.body;
     await authServices.passwordResetService.requestPasswordReset(email);
-    res.json({ message: 'If an account exists with this email, you will receive password reset instructions.' });
+    return successHandler({
+      message: 'If an account exists with this email, you will receive password reset instructions.'
+    }, req, res);
   });
 
   // Reset Password Handler
@@ -94,7 +85,9 @@ export class AuthController {
     
     await authServices.passwordResetService.resetPassword(token, newPassword);
 
-    res.json({ message: 'Password reset successfully' });
+    return successHandler({
+      message: 'Password reset successfully'
+    }, req, res);
   });
 
   // Logout Handler
@@ -108,10 +101,9 @@ export class AuthController {
       sameSite: 'strict'
     });
 
-    res.json({
-      success: true,
+    return successHandler({
       message: 'Logged out successfully'
-    });
+    }, req, res);
   });
 }
 

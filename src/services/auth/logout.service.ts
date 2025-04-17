@@ -14,21 +14,24 @@ export class LogoutService {
 
   async execute(refreshToken: string, accessToken?: string): Promise<void> {
     try {
+      // If no refresh token, just clear the cookie and return
       if (!refreshToken) {
-        throw new ApiError(400, 'Refresh token is required');
+        logger.info('No refresh token provided for logout - clearing cookie only');
+        return;
       }
 
       // Verify the refresh token
       const payload = this.tokenService.verifyToken(refreshToken, TokenType.REFRESH);
       if (!payload) {
-        throw new ApiError(401, 'Invalid refresh token');
+        logger.warn('Invalid refresh token during logout');
+        return;
       }
 
       // Find and blacklist the refresh token
       const refreshTokenRecord = await this.tokenRepository.findByToken(refreshToken);
       if (!refreshTokenRecord) {
         logger.warn(`Refresh token not found for user ${payload.userId}`);
-        throw new ApiError(404, 'Token not found');
+        return;
       }
 
       await this.tokenRepository.update(refreshTokenRecord.id!, { blacklisted: true });

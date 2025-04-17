@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiError } from '@/utils/api-error';
 import { TokenType } from '@/models/token-model';
-import { UserModel } from '@/models/user-model';
+import { DBUser } from '@/models/user-model';
 import { UserRepository } from '@/repositories/user.repository';
-import { TokenRepository } from '@/repositories/token.repository';
 import { TokenService } from '@/services/auth/token.service';
 import { logger } from '@/config/logger';
 
@@ -11,19 +10,17 @@ import { logger } from '@/config/logger';
 declare global {
   namespace Express {
     interface Request {
-      user?: UserModel;
+      user?: DBUser;
     }
   }
 }
 
 export class AuthMiddleware {
   private userRepository: UserRepository;
-  private tokenRepository: TokenRepository;
   private tokenService: TokenService;
 
   constructor() {
     this.userRepository = new UserRepository();
-    this.tokenRepository = new TokenRepository();
     this.tokenService = new TokenService();
   }
 

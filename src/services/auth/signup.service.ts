@@ -6,6 +6,8 @@ import { SafeUser } from '@/models/user-model';
 import { hashPassword } from '@/utils/hash';
 import { logger } from '@/config/logger';
 import { TokenService } from '@/services/auth/token.service';
+import { userCreateSchema } from '@/models/user-model';
+import { ZodError } from 'zod';
 
 export class SignupService {
   private tokenService: TokenService;
@@ -21,6 +23,16 @@ export class SignupService {
     user: SafeUser;
     verificationToken: string;
   }> {
+    // Validate input using schema
+    try {
+      await userCreateSchema.parseAsync({ email, password, name });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw ApiError.fromZodError(error);
+      }
+      throw new ApiError(400, 'Invalid input data');
+    }
+
     // Check if user already exists
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
@@ -35,7 +47,9 @@ export class SignupService {
       email, 
       password: hashedPassword, 
       name,
-      isActive: true 
+      isActive: true,
+      lastLogin: null,
+      verifiedAt: null
     });
     
     if (!newUser?.id || !newUser?.email) {
@@ -61,7 +75,7 @@ export class SignupService {
       // TODO: Send verification email
       
       return {
-        user: newUser.toSafeJSON(),
+        user: newUser as SafeUser,
         verificationToken
       };
     } catch (error) {
