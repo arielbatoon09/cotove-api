@@ -19,8 +19,8 @@ interface LoginResult {
   };
   refreshToken: string;
   accessToken: string;
-  expiresIn: number;  // seconds until expiration
-  expiresAt: number;  // Unix timestamp in seconds
+  expiresIn: number;
+  expiresAt: number;
 }
 
 export class LoginService {
@@ -90,7 +90,7 @@ export class LoginService {
         userId: user.id!,
         token: refreshToken,
         type: TokenType.REFRESH,
-        expiresAt: new Date(refreshTokenExpiresAt * 1000), // Convert to milliseconds for Date
+        expiresAt: new Date(refreshTokenExpiresAt * 1000),
         blacklisted: false
       });
 

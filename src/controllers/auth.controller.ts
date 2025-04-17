@@ -13,18 +13,17 @@ export class AuthController {
     
     const result = await authServices.loginService.execute({ email, password });
     
-    // // (Temporarily Removed) Set refresh token in HTTP-only cookie
-    // setHttpOnlyCookie(res, 'refreshToken', result.refreshToken, {
-    //   maxAge: authServices.loginService['tokenService'].getExpiresIn(TokenType.REFRESH) * 1000
-    // });
+    // Set refresh token in HTTP-only cookie
+    setHttpOnlyCookie(res, 'refreshToken', result.refreshToken, {
+      maxAge: authServices.loginService['tokenService'].getExpiresIn(TokenType.REFRESH) * 1000
+    });
     
     return successHandler({
-      message: 'Login successful',
       accessToken: result.accessToken,
       refreshToken: result.refreshToken,
       expiresIn: result.expiresIn,
       expiresAt: result.expiresAt,
-      details: result.user,
+      user: result.user,
     }, req, res);
   });
 
@@ -56,15 +55,17 @@ export class AuthController {
 
   // Refresh Token Handler
   refreshToken: RequestHandler = asyncHandler(async (req: Request, res: Response) => {
-    const refreshToken = req.cookies.refreshToken;
+    const { refreshToken } = req.body;
     if (!refreshToken) {
       throw new ApiError(401, 'Refresh token is missing');
     }
     const result = await authServices.refreshTokenService.execute(refreshToken);
 
     return successHandler({
-      message: 'Token refreshed successfully',
-      accessToken: result.accessToken
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      expiresIn: result.expiresIn,
+      expiresAt: result.expiresAt
     }, req, res);
   });
 
@@ -90,12 +91,9 @@ export class AuthController {
 
   // Logout Handler
   logout: RequestHandler = asyncHandler(async (req: Request, res: Response) => {
-    const refreshToken = req.cookies.refreshToken;
+    const { refreshToken } = req.body;
     await authServices.logoutService.execute(refreshToken);
     
-    // Clear refresh token cookie
-    clearCookie(res, 'refreshToken');
-
     return successHandler({
       message: 'Logged out successfully'
     }, req, res);
