@@ -4,6 +4,7 @@ import { asyncHandler } from '@/middlewares/error-handler';
 import { successHandler } from '@/middlewares/success-handler';
 import { authServices } from '@/services/auth';
 import { TokenType } from '@/models/token-model';
+import { setHttpOnlyCookie, clearCookie } from '@/utils/cookie';
 
 export class AuthController {
   // Login Handler
@@ -13,10 +14,7 @@ export class AuthController {
     const result = await authServices.loginService.execute({ email, password });
     
     // Set refresh token in HTTP-only cookie
-    res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+    setHttpOnlyCookie(res, 'refreshToken', result.refreshToken, {
       maxAge: authServices.loginService['tokenService'].getExpiresIn(TokenType.REFRESH) * 1000
     });
     
@@ -33,7 +31,7 @@ export class AuthController {
     const result = await authServices.signupService.signup(email, password, name);
     
     return successHandler({
-      message: 'User created successfully. Please verify your email.',
+      message: 'Please check your email to verify your account.',
       user: result.user,
       verificationUrl: result.verificationUrl
     }, req, res, 201);
@@ -91,12 +89,9 @@ export class AuthController {
   logout: RequestHandler = asyncHandler(async (req: Request, res: Response) => {
     const refreshToken = req.cookies.refreshToken;
     await authServices.logoutService.execute(refreshToken);
+    
     // Clear refresh token cookie
-    res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
-    });
+    clearCookie(res, 'refreshToken');
 
     return successHandler({
       message: 'Logged out successfully'

@@ -54,7 +54,7 @@ export class LoginService {
 
       // Check if email is verified
       if (!user.verifiedAt) {
-        throw new ApiError(403, 'Please verify your email address before logging in');
+        throw new ApiError(403, 'Please verify your email address before logging in.');
       }
 
       // Ensure user has required properties
