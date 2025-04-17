@@ -58,19 +58,6 @@ export class AuthMiddleware {
         throw new ApiError(401, 'User not found');
       }
 
-      const tokenRecord = await this.tokenRepository.findByToken(token);
-      if (!tokenRecord) {
-        throw new ApiError(401, 'Token not found in database');
-      }
-      if (tokenRecord.blacklisted) {
-        throw new ApiError(401, 'Token has been revoked');
-      }
-
-      // Check if token has expired
-      if (tokenRecord.expiresAt < new Date()) {
-        throw new ApiError(401, 'Token has expired');
-      }
-
       // Check if user is active
       if (!user.isActive) {
         throw new ApiError(403, 'User account is deactivated');
