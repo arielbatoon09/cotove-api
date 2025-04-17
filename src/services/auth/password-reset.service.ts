@@ -27,12 +27,15 @@ export class PasswordResetService {
     // Generate and store password reset token
     const resetToken = tokenService.generateToken(user.id!, user.email, TokenType.RESET_PASSWORD);
     const hashedToken = hashToken(resetToken);
+
+    // Get expiration time from token service
+    const resetTokenExpiresIn = tokenService.getExpiresIn(TokenType.RESET_PASSWORD);
     
     await this.tokenRepository.create({
       userId: user.id!,
       token: hashedToken,
       type: TokenType.RESET_PASSWORD,
-      expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
+      expiresAt: new Date(Date.now() + resetTokenExpiresIn * 1000),
       blacklisted: false
     });
 

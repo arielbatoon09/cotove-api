@@ -1,6 +1,5 @@
 import { TokenType } from '@/models/token-model';
 import { sign, verify } from 'jsonwebtoken';
-import { ApiError } from '@/utils/api-error';
 
 interface TokenPayload {
   userId: string;
@@ -18,8 +17,8 @@ export class TokenService {
   private readonly JWT_RESET_PASSWORD_EXPIRES_IN: number;
 
   constructor() {
-    this.JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'your-access-secret-key';
-    this.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key';
+    this.JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || '';
+    this.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || '';
     this.JWT_ACCESS_EXPIRES_IN = 15 * 60; // 15 minutes
     this.JWT_REFRESH_EXPIRES_IN = 7 * 24 * 60 * 60; // 7 days
     this.JWT_EMAIL_VERIFICATION_EXPIRES_IN = 7 * 24 * 60 * 60; // 7 days
@@ -71,7 +70,7 @@ export class TokenService {
     return this.verifyToken(token, TokenType.REFRESH);
   }
 
-  private getExpiresIn(type: TokenType): number {
+  public getExpiresIn(type: TokenType): number {
     switch (type) {
       case TokenType.ACCESS:
         return this.JWT_ACCESS_EXPIRES_IN;
@@ -93,9 +92,9 @@ export class TokenService {
       case TokenType.REFRESH:
         return this.JWT_REFRESH_SECRET;
       case TokenType.EMAIL_VERIFICATION:
-        return this.JWT_ACCESS_SECRET; // Using access secret for email verification
+        return this.JWT_ACCESS_SECRET;
       case TokenType.RESET_PASSWORD:
-        return this.JWT_ACCESS_SECRET; // Using access secret for password reset
+        return this.JWT_ACCESS_SECRET;
       default:
         return this.JWT_ACCESS_SECRET;
     }

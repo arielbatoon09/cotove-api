@@ -43,13 +43,16 @@ export class SignupService {
       
       // Hash the verification token before storing
       const hashedVerificationToken = hashToken(verificationToken);
+
+      // Get expiration time from token service
+      const verificationTokenExpiresIn = tokenService.getExpiresIn(TokenType.EMAIL_VERIFICATION);
       
       // Store the hashed verification token with the actual user ID
       await this.tokenRepository.create({
         userId: newUser.id,
         token: hashedVerificationToken,
         type: TokenType.EMAIL_VERIFICATION,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+        expiresAt: new Date(Date.now() + verificationTokenExpiresIn * 1000),
         blacklisted: false
       });
       

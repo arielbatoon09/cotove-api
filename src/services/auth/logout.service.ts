@@ -1,6 +1,5 @@
 import { ApiError } from '@/utils/api-error';
 import { TokenRepository } from '@/repositories/token.repository';
-import { UserRepository } from '@/repositories/user.repository';
 import { hashToken } from '@/utils/hash';
 import { TokenType } from '@/models/token-model';
 import tokenService from './token.service';
@@ -8,8 +7,7 @@ import { logger } from '@/config/logger';
 
 export class LogoutService {
   constructor(
-    private tokenRepository: TokenRepository,
-    private userRepository: UserRepository
+    private tokenRepository: TokenRepository
   ) {}
 
   async execute(refreshToken: string, accessToken?: string): Promise<void> {
@@ -60,6 +58,5 @@ export class LogoutService {
 
 // Export a singleton instance
 export const logoutService = new LogoutService(
-  new TokenRepository(),
-  new UserRepository()
-); 
+  new TokenRepository()
+);

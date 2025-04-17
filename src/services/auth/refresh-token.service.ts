@@ -70,13 +70,16 @@ export class RefreshTokenService {
         TokenType.ACCESS
       );
 
+      // Get expiration time from token service
+      const accessTokenExpiresIn = tokenService.getExpiresIn(TokenType.ACCESS);
+
       // Hash and store the new access token
       const hashedAccessToken = hashToken(newAccessToken);
       await this.tokenRepository.create({
         userId: payload.userId,
         token: hashedAccessToken,
         type: TokenType.ACCESS,
-        expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
+        expiresAt: new Date(Date.now() + accessTokenExpiresIn * 1000),
         blacklisted: false
       });
 
@@ -85,7 +88,7 @@ export class RefreshTokenService {
       // Return the new access token and the same refresh token
       return {
         accessToken: newAccessToken,
-        refreshToken: refreshToken // Return the same refresh token
+        refreshToken: refreshToken
       };
     } catch (error) {
       logger.error('Refresh token service error:', error);
@@ -98,9 +101,7 @@ export class RefreshTokenService {
 }
 
 // Export a singleton instance
-const tokenRepository = new TokenRepository();
-const userRepository = new UserRepository();
 export const refreshTokenService = new RefreshTokenService(
-  tokenRepository,
-  userRepository
-); 
+  new TokenRepository(),
+  new UserRepository()
+);
