@@ -22,7 +22,7 @@ export class AuthController {
     res.json({
       message: 'Login successful',
       user: result.user,
-      accessToken: result.accessToken
+      accessToken: result.accessToken,
     });
   });
 
