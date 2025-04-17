@@ -1,15 +1,19 @@
 import { ApiError } from '@/utils/api-error';
 import { UserRepository } from '@/repositories/user.repository';
 import { TokenRepository } from '@/repositories/token.repository';
-import tokenService from '@/services/auth/token.service';
+import { TokenService } from '@/services/auth/token.service';
 import { TokenType } from '@/models/token-model';
-import { hashPassword, hashToken } from '@/utils/hash';
+import { hashPassword } from '@/utils/hash';
 
 export class PasswordResetService {
+  private tokenService: TokenService;
+
   constructor(
     private userRepository: UserRepository,
     private tokenRepository: TokenRepository
-  ) {}
+  ) {
+    this.tokenService = new TokenService();
+  }
 
   async requestPasswordReset(email: string): Promise<void> {
     if (!email) {
@@ -20,20 +24,18 @@ export class PasswordResetService {
     const user = await this.userRepository.findByEmail(email);
     
     if (!user) {
-      // Don't reveal if user exists
       return;
     }
 
     // Generate and store password reset token
-    const resetToken = tokenService.generateToken(user.id!, user.email, TokenType.RESET_PASSWORD);
-    const hashedToken = hashToken(resetToken);
+    const resetToken = this.tokenService.generateToken(user.id!, user.email, TokenType.RESET_PASSWORD);
 
     // Get expiration time from token service
-    const resetTokenExpiresIn = tokenService.getExpiresIn(TokenType.RESET_PASSWORD);
+    const resetTokenExpiresIn = this.tokenService.getExpiresIn(TokenType.RESET_PASSWORD);
     
     await this.tokenRepository.create({
       userId: user.id!,
-      token: hashedToken,
+      token: resetToken,
       type: TokenType.RESET_PASSWORD,
       expiresAt: new Date(Date.now() + resetTokenExpiresIn * 1000),
       blacklisted: false
@@ -48,11 +50,8 @@ export class PasswordResetService {
         throw new ApiError(400, 'Token and new password are required');
       }
       
-      // Hash the token before verification
-      const hashedToken = hashToken(token);
-      
       // Check if token exists in database
-      const tokenRecord = await this.tokenRepository.findByToken(hashedToken);
+      const tokenRecord = await this.tokenRepository.findByToken(token);
       if (!tokenRecord) {
         throw new ApiError(400, 'Invalid password reset token');
       }
@@ -68,7 +67,7 @@ export class PasswordResetService {
       }
       
       // Verify token
-      const payload = tokenService.verifyToken(token, TokenType.RESET_PASSWORD);
+      const payload = this.tokenService.verifyToken(token, TokenType.RESET_PASSWORD);
       if (!payload) {
         throw new ApiError(400, 'Invalid password reset token');
       }

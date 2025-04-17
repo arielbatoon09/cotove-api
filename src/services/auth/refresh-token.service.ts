@@ -2,8 +2,7 @@ import { ApiError } from '@/utils/api-error';
 import { TokenRepository } from '@/repositories/token.repository';
 import { UserRepository } from '@/repositories/user.repository';
 import { TokenType } from '@/models/token-model';
-import tokenService from './token.service';
-import { hashToken } from '@/utils/hash';
+import { TokenService } from '@/services/auth/token.service';
 import { logger } from '@/config/logger';
 
 interface RefreshTokenResult {
@@ -12,10 +11,14 @@ interface RefreshTokenResult {
 }
 
 export class RefreshTokenService {
+  private tokenService: TokenService;
+
   constructor(
     private tokenRepository: TokenRepository,
     private userRepository: UserRepository
-  ) {}
+  ) {
+    this.tokenService = new TokenService();
+  }
 
   async execute(refreshToken: string): Promise<RefreshTokenResult> {
     try {
@@ -24,7 +27,7 @@ export class RefreshTokenService {
       }
       
       // Verify the token signature
-      const payload = tokenService.verifyRefreshToken(refreshToken);
+      const payload = this.tokenService.verifyRefreshToken(refreshToken);
       if (!payload || !payload.userId || !payload.email) {
         logger.error('Invalid token payload:', payload);
         throw new ApiError(401, 'Invalid refresh token');
@@ -37,15 +40,11 @@ export class RefreshTokenService {
         throw new ApiError(401, 'Invalid refresh token');
       }
 
-      // Hash the refresh token for database lookup
-      const hashedToken = hashToken(refreshToken);
-      logger.debug(`Looking up hashed token: ${hashedToken}`);
-
       // Get all refresh tokens for this user
       const userTokens = await this.tokenRepository.findByUserIdAndType(payload.userId, TokenType.REFRESH);
       
       // Find the matching token
-      const token = userTokens.find(t => t.token === hashedToken);
+      const token = userTokens.find(t => t.token === refreshToken);
       if (!token) {
         logger.error('Token not found in database');
         throw new ApiError(401, 'Invalid refresh token');
@@ -64,20 +63,18 @@ export class RefreshTokenService {
       }
 
       // Generate new access token
-      const newAccessToken = tokenService.generateToken(
+      const newAccessToken = this.tokenService.generateToken(
         payload.userId, 
-        payload.email, 
+        payload.email,
         TokenType.ACCESS
       );
 
       // Get expiration time from token service
-      const accessTokenExpiresIn = tokenService.getExpiresIn(TokenType.ACCESS);
+      const accessTokenExpiresIn = this.tokenService.getExpiresIn(TokenType.ACCESS);
 
-      // Hash and store the new access token
-      const hashedAccessToken = hashToken(newAccessToken);
       await this.tokenRepository.create({
         userId: payload.userId,
-        token: hashedAccessToken,
+        token: newAccessToken,
         type: TokenType.ACCESS,
         expiresAt: new Date(Date.now() + accessTokenExpiresIn * 1000),
         blacklisted: false

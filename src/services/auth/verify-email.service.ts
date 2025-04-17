@@ -1,15 +1,18 @@
 import { ApiError } from '@/utils/api-error';
 import { UserRepository } from '@/repositories/user.repository';
 import { TokenRepository } from '@/repositories/token.repository';
-import tokenService from '@/services/auth/token.service';
+import { TokenService } from '@/services/auth/token.service';
 import { TokenType } from '@/models/token-model';
-import { hashToken } from '@/utils/hash';
 
 export class VerifyEmailService {
+  private tokenService: TokenService;
+
   constructor(
     private userRepository: UserRepository,
     private tokenRepository: TokenRepository
-  ) {}
+  ) {
+    this.tokenService = new TokenService();
+  }
 
   async execute(token: string): Promise<void> {
     try {
@@ -18,23 +21,16 @@ export class VerifyEmailService {
       }
 
       // First verify the token signature
-      const payload = tokenService.verifyToken(token, TokenType.EMAIL_VERIFICATION);
+      const payload = this.tokenService.verifyToken(token, TokenType.EMAIL_VERIFICATION);
       if (!payload) {
         throw new ApiError(400, 'Invalid verification token');
       }
 
-      console.log('Token payload:', payload);
-
-      // Hash the token for database lookup
-      const hashedToken = hashToken(token);
-
       // Check if token exists in database
-      const tokenRecord = await this.tokenRepository.findByToken(hashedToken);
+      const tokenRecord = await this.tokenRepository.findByToken(token);
       if (!tokenRecord) {
         throw new ApiError(400, 'Invalid verification token');
       }
-
-      console.log('Token record:', tokenRecord);
 
       // Check if token is blacklisted
       if (tokenRecord.blacklisted) {

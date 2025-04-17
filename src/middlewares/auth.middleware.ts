@@ -4,8 +4,7 @@ import { TokenType } from '@/models/token-model';
 import { UserModel } from '@/models/user-model';
 import { UserRepository } from '@/repositories/user.repository';
 import { TokenRepository } from '@/repositories/token.repository';
-import tokenService from '@/services/auth/token.service';
-import { hashToken } from '@/utils/hash';
+import { TokenService } from '@/services/auth/token.service';
 import { logger } from '@/config/logger';
 
 // Extend Express Request type to include user
@@ -20,10 +19,12 @@ declare global {
 export class AuthMiddleware {
   private userRepository: UserRepository;
   private tokenRepository: TokenRepository;
+  private tokenService: TokenService;
 
   constructor() {
     this.userRepository = new UserRepository();
     this.tokenRepository = new TokenRepository();
+    this.tokenService = new TokenService();
   }
 
   authenticate = async (req: Request, res: Response, next: NextFunction) => {
@@ -41,7 +42,7 @@ export class AuthMiddleware {
       }
 
       // Verify the access token
-      const payload = tokenService.verifyToken(token, TokenType.ACCESS);
+      const payload = this.tokenService.verifyToken(token, TokenType.ACCESS);
       if (!payload) {
         throw new ApiError(401, 'Invalid access token');
       }
@@ -57,9 +58,7 @@ export class AuthMiddleware {
         throw new ApiError(401, 'User not found');
       }
 
-      // Check if token is blacklisted
-      const hashedToken = hashToken(token);
-      const tokenRecord = await this.tokenRepository.findByToken(hashedToken);
+      const tokenRecord = await this.tokenRepository.findByToken(token);
       if (!tokenRecord) {
         throw new ApiError(401, 'Token not found in database');
       }

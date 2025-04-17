@@ -1,10 +1,9 @@
 import { ApiError } from '@/utils/api-error';
-import { verifyPassword, hashToken } from '@/utils/hash';
+import { verifyPassword } from '@/utils/hash';
 import { UserRepository } from '@/repositories/user.repository';
 import { TokenRepository } from '@/repositories/token.repository';
 import { TokenType } from '@/models/token-model';
-
-import tokenService from './token.service';
+import { TokenService } from '@/services/auth/token.service';
 
 interface LoginInput {
   email: string;
@@ -22,10 +21,14 @@ interface LoginResult {
 }
 
 export class LoginService {
+  private tokenService: TokenService;
+
   constructor(
     private userRepository: UserRepository,
     private tokenRepository: TokenRepository
-  ) {}
+  ) {
+    this.tokenService = new TokenService();
+  }
 
   async execute(input: LoginInput): Promise<LoginResult> {
     try {
@@ -58,22 +61,19 @@ export class LoginService {
         throw new ApiError(500, 'User data is incomplete');
       }
 
-      const refreshToken = tokenService.generateToken(
+      const refreshToken = this.tokenService.generateToken(
         user.id!,
         user.email,
         TokenType.REFRESH
       );
 
-      // Hash and store both tokens
-      const hashedRefreshToken = hashToken(refreshToken);
-
       // Get expiration time from token service
-      const refreshTokenExpiresIn = tokenService.getExpiresIn(TokenType.REFRESH);
+      const refreshTokenExpiresIn = this.tokenService.getExpiresIn(TokenType.REFRESH);
 
       // Store refresh token
       await this.tokenRepository.create({
         userId: user.id!,
-        token: hashedRefreshToken,
+        token: refreshToken,
         type: TokenType.REFRESH,
         expiresAt: new Date(Date.now() + refreshTokenExpiresIn * 1000),
         blacklisted: false

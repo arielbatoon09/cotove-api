@@ -1,16 +1,21 @@
 import { ApiError } from '@/utils/api-error';
 import { UserRepository } from '@/repositories/user.repository';
 import { TokenRepository } from '@/repositories/token.repository';
-import tokenService from '@/services/auth/token.service';
 import { TokenType } from '@/models/token-model';
 import { SafeUser } from '@/models/user-model';
-import { hashPassword, hashToken } from '@/utils/hash';
+import { hashPassword } from '@/utils/hash';
+import { logger } from '@/config/logger';
+import { TokenService } from '@/services/auth/token.service';
 
 export class SignupService {
+  private tokenService: TokenService;
+
   constructor(
     private userRepository: UserRepository,
     private tokenRepository: TokenRepository
-  ) {}
+  ) {
+    this.tokenService = new TokenService();
+  }
 
   async signup(email: string, password: string, name: string): Promise<{
     user: SafeUser;
@@ -39,18 +44,15 @@ export class SignupService {
 
     try {
       // Generate verification token with the actual user ID
-      const verificationToken = await tokenService.generateEmailVerificationToken(newUser.id, email);
-      
-      // Hash the verification token before storing
-      const hashedVerificationToken = hashToken(verificationToken);
+      const verificationToken = await this.tokenService.generateEmailVerificationToken(newUser.id, email);
 
       // Get expiration time from token service
-      const verificationTokenExpiresIn = tokenService.getExpiresIn(TokenType.EMAIL_VERIFICATION);
+      const verificationTokenExpiresIn = this.tokenService.getExpiresIn(TokenType.EMAIL_VERIFICATION);
       
       // Store the hashed verification token with the actual user ID
       await this.tokenRepository.create({
         userId: newUser.id,
-        token: hashedVerificationToken,
+        token: verificationToken,
         type: TokenType.EMAIL_VERIFICATION,
         expiresAt: new Date(Date.now() + verificationTokenExpiresIn * 1000),
         blacklisted: false
@@ -62,12 +64,8 @@ export class SignupService {
         user: newUser.toSafeJSON(),
         verificationToken
       };
-    } catch (tokenError) {
-      // If token storage fails, we need to delete the user
-      console.error('Failed to store verification token:', tokenError);
-      
-      // TODO: Add a method to delete the user if token storage fails
-      // For now, we'll just throw an error
+    } catch (error) {
+      logger.error('Failed to store verification token:', error);
       throw new ApiError(500, 'Failed to complete registration. Please try again.');
     }
   }
