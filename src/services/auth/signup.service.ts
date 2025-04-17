@@ -21,7 +21,7 @@ export class SignupService {
 
   async signup(email: string, password: string, name: string): Promise<{
     user: SafeUser;
-    verificationToken: string;
+    verificationUrl: string;
   }> {
     // Validate input using schema
     try {
@@ -76,7 +76,7 @@ export class SignupService {
       
       return {
         user: newUser as SafeUser,
-        verificationToken
+        verificationUrl: `${process.env.BACKEND_URL}/api/v1/auth/verify-email/${verificationToken}?redirect=${encodeURIComponent(process.env.FRONTEND_URL + '/login')}`
       };
     } catch (error) {
       logger.error('Failed to store verification token:', error);

@@ -6,7 +6,7 @@ import { authMiddleware } from "@/middlewares/auth.middleware";
 export default createRouter((router: Router) => {
   router.post('/signup', authController.signup);
   router.post('/login', authController.login);
-  router.post('/verify-email', authController.verifyEmail);
+  router.get('/verify-email/:token', authController.verifyEmail);
   router.post('/request-password-reset', authController.requestPasswordReset);
   router.post('/reset-password', authController.resetPassword);
   router.post('/refresh-token', authController.refreshToken);

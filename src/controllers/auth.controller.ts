@@ -34,26 +34,22 @@ export class AuthController {
     return successHandler({
       message: 'User created successfully. Please verify your email.',
       user: result.user,
-      verificationToken: result.verificationToken
+      verificationUrl: result.verificationUrl
     }, req, res, 201);
   });
 
   // Verify Email Handler
   verifyEmail: RequestHandler = asyncHandler(async (req: Request, res: Response) => {
-    const { token, type, redirect_to } = req.query;
-    if (!token || typeof token !== 'string') {
-      throw new ApiError(400, 'Verification token is required');
-    }
-
-    if (!type || typeof type !== 'string') {
-      throw new ApiError(400, 'Token type is required');
-    }
-
+    const token = req.params.token;
+    const redirectUrl = req.query.redirect as string;
+    
     await authServices.verifyEmailService.execute(token);
-
-    return successHandler({
-      message: 'Email verified successfully'
-    }, req, res);
+    
+    if (redirectUrl) {
+      res.redirect(redirectUrl);
+    } else {
+      return successHandler({ message: 'Email verified successfully' }, req, res);
+    }
   });
 
   // Refresh Token Handler

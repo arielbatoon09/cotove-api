@@ -33,7 +33,7 @@ export class UserRepository {
     return result[0];
   }
   
-  async update(id: string, userData: Partial<CreateUserInput>): Promise<DBUser> {
+  async update(id: string, userData: Partial<DBUser>): Promise<DBUser> {
     const updateFields: Partial<DBUser> = {
       updatedAt: new Date()
     };
@@ -42,6 +42,8 @@ export class UserRepository {
     if (userData.password) updateFields.password = userData.password;
     if (userData.name !== undefined) updateFields.name = userData.name ?? '';
     if (userData.isActive !== undefined) updateFields.isActive = userData.isActive;
+    if (userData.verifiedAt !== undefined) updateFields.verifiedAt = userData.verifiedAt;
+    if (userData.lastLogin !== undefined) updateFields.lastLogin = userData.lastLogin;
     
     const result = await db.update(users)
       .set(updateFields)
