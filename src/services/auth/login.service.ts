@@ -18,6 +18,7 @@ interface LoginResult {
     isActive: boolean;
   };
   refreshToken: string;
+  accessToken: string;
 }
 
 export class LoginService {
@@ -61,16 +62,24 @@ export class LoginService {
         throw new ApiError(500, 'User data is incomplete');
       }
 
+      // Generate refresh token for the user
       const refreshToken = this.tokenService.generateToken(
         user.id!,
         user.email,
         TokenType.REFRESH
       );
 
+      // Generate access token for the user
+      const accessToken = this.tokenService.generateToken(
+        user.id!,
+        user.email,
+        TokenType.ACCESS
+      );
+
       // Get expiration time from token service
       const refreshTokenExpiresIn = this.tokenService.getExpiresIn(TokenType.REFRESH);
 
-      // Store refresh token
+      // Store refresh token only in the database
       await this.tokenRepository.create({
         userId: user.id!,
         token: refreshToken,
@@ -91,7 +100,8 @@ export class LoginService {
           name: user.name || '',
           isActive: user.isActive
         },
-        refreshToken
+        refreshToken,
+        accessToken
       };
     } catch (error) {
       if (error instanceof ApiError) {

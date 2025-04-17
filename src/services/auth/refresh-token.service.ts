@@ -69,14 +69,22 @@ export class RefreshTokenService {
         TokenType.ACCESS
       );
 
-      // Get expiration time from token service
-      const accessTokenExpiresIn = this.tokenService.getExpiresIn(TokenType.ACCESS);
+      // Generate new refresh token
+      const newRefreshToken = this.tokenService.generateToken(
+        payload.userId,
+        payload.email,
+        TokenType.REFRESH
+      );
 
+      // Get expiration time from token service
+      const refreshTokenExpiresIn = this.tokenService.getExpiresIn(TokenType.REFRESH);
+
+      // Store new refresh token in the database
       await this.tokenRepository.create({
         userId: payload.userId,
-        token: newAccessToken,
-        type: TokenType.ACCESS,
-        expiresAt: new Date(Date.now() + accessTokenExpiresIn * 1000),
+        token: newRefreshToken,
+        type: TokenType.REFRESH,
+        expiresAt: new Date(Date.now() + refreshTokenExpiresIn * 1000),
         blacklisted: false
       });
 
