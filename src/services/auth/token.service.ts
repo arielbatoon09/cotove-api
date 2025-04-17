@@ -20,7 +20,7 @@ export class TokenService {
     this.JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || '';
     this.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || '';
     this.JWT_ACCESS_EXPIRES_IN = 15 * 60; // 15 minutes
-    this.JWT_REFRESH_EXPIRES_IN = 7 * 24 * 60 * 60; // 7 days
+    this.JWT_REFRESH_EXPIRES_IN = 1 * 60 * 60; // 1 hour
     this.JWT_EMAIL_VERIFICATION_EXPIRES_IN = 7 * 24 * 60 * 60; // 7 days
     this.JWT_RESET_PASSWORD_EXPIRES_IN = 15 * 60; // 15 minutes
   }

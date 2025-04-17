@@ -8,6 +8,8 @@ import { logger } from '@/config/logger';
 interface RefreshTokenResult {
   accessToken: string;
   refreshToken: string;
+  expiresIn: number;  // seconds until expiration
+  expiresAt: number;  // Unix timestamp in seconds
 }
 
 export class RefreshTokenService {
@@ -76,24 +78,29 @@ export class RefreshTokenService {
         TokenType.REFRESH
       );
 
-      // Get expiration time from token service
+      // Get expiration time from token service (in seconds)
       const refreshTokenExpiresIn = this.tokenService.getExpiresIn(TokenType.REFRESH);
+      
+      // Calculate refresh token expiration timestamp (in seconds)
+      const now = Math.floor(Date.now() / 1000);
+      const refreshTokenExpiresAt = now + refreshTokenExpiresIn;
 
       // Store new refresh token in the database
       await this.tokenRepository.create({
         userId: payload.userId,
         token: newRefreshToken,
         type: TokenType.REFRESH,
-        expiresAt: new Date(Date.now() + refreshTokenExpiresIn * 1000),
+        expiresAt: new Date(refreshTokenExpiresAt * 1000),
         blacklisted: false
       });
 
       logger.info(`New access token generated for user ${payload.userId}`);
 
-      // Return the new access token and the same refresh token
       return {
         accessToken: newAccessToken,
-        refreshToken: refreshToken
+        refreshToken: newRefreshToken,
+        expiresIn: refreshTokenExpiresIn,
+        expiresAt: refreshTokenExpiresAt
       };
     } catch (error) {
       logger.error('Refresh token service error:', error);
