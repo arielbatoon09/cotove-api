@@ -17,21 +17,21 @@ export class LogoutService {
       // If no refresh token, just clear the cookie and return
       if (!refreshToken) {
         logger.info('No refresh token provided for logout - clearing cookie only');
-        return;
+        throw new ApiError(401, 'No refresh token provided for logout');
       }
 
       // Verify the refresh token
       const payload = this.tokenService.verifyToken(refreshToken, TokenType.REFRESH);
       if (!payload) {
         logger.warn('Invalid refresh token during logout');
-        return;
+        throw new ApiError(401, 'Invalid refresh token payload during logout');
       }
 
       // Find and blacklist the refresh token
       const refreshTokenRecord = await this.tokenRepository.findByToken(refreshToken);
       if (!refreshTokenRecord) {
         logger.warn(`Refresh token not found for user ${payload.userId}`);
-        return;
+        throw new ApiError(401, 'Refresh token not found');
       }
 
       await this.tokenRepository.update(refreshTokenRecord.id!, { blacklisted: true });

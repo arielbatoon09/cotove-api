@@ -3,8 +3,6 @@ import { ApiError } from '@/utils/api-error';
 import { asyncHandler } from '@/middlewares/error-handler';
 import { successHandler } from '@/middlewares/success-handler';
 import { authServices } from '@/services/auth';
-import { TokenType } from '@/models/token-model';
-import { setHttpOnlyCookie, clearCookie } from '@/utils/cookie';
 
 export class AuthController {
   // Login Handler
@@ -12,11 +10,6 @@ export class AuthController {
     const { email, password } = req.body;
     
     const result = await authServices.loginService.execute({ email, password });
-    
-    // Set refresh token in HTTP-only cookie
-    setHttpOnlyCookie(res, 'refreshToken', result.refreshToken, {
-      maxAge: authServices.loginService['tokenService'].getExpiresIn(TokenType.REFRESH) * 1000
-    });
     
     return successHandler({
       accessToken: result.accessToken,

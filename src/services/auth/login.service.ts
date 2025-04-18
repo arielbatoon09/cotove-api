@@ -54,6 +54,9 @@ export class LoginService {
         throw new ApiError(403, 'User account is deactivated');
       }
 
+      // Clean expired tokens for this user
+      await this.tokenRepository.cleanUserTokens(user.id!);
+
       // Check if email is verified
       if (!user.verifiedAt) {
         throw new ApiError(403, 'Please verify your email address before logging in.');

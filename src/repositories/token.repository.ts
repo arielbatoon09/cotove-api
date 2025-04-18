@@ -1,6 +1,6 @@
 import { db } from '@/config/database';
 import { tokens } from '@/database/schema/token.schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, or, lt, isNull } from 'drizzle-orm';
 import { DBToken, TokenType, CreateTokenInput } from '@/models/token-model';
 
 export class TokenRepository {
@@ -67,4 +67,31 @@ export class TokenRepository {
       where: eq(tokens.userId, userId)
     });
   }
-} 
+
+  async cleanExpiredTokens(): Promise<number> {
+    const now = new Date();
+    const result = await db.delete(tokens)
+      .where(and(
+        eq(tokens.blacklisted, true),
+        or(
+          lt(tokens.expiresAt, now),
+          isNull(tokens.expiresAt)
+        )
+      ));
+    return result.rowCount ?? 0;
+  }
+
+  async cleanUserTokens(userId: string): Promise<number> {
+    const now = new Date();
+    const result = await db.delete(tokens)
+      .where(and(
+        eq(tokens.userId, userId),
+        or(
+          eq(tokens.blacklisted, true),
+          lt(tokens.expiresAt, now),
+          isNull(tokens.expiresAt)
+        )
+      ));
+    return result.rowCount ?? 0;
+  }
+}
