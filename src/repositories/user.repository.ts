@@ -1,7 +1,7 @@
 import { db } from '@/config/database';
 import { users } from '@/database/schema/user.schema';
 import { eq } from 'drizzle-orm';
-import { DBUser, CreateUserInput } from '@/models/user-model';
+import { DBUser, CreateUserInput } from '@/models/user.model';
 
 export class UserRepository {
   async findByEmail(email: string): Promise<DBUser | null> {

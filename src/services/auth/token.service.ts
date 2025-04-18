@@ -1,4 +1,4 @@
-import { TokenType } from '@/models/token-model';
+import { TokenType } from '@/models/token.model';
 import { sign, verify } from 'jsonwebtoken';
 
 interface TokenPayload {

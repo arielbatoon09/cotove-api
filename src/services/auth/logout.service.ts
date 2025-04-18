@@ -1,6 +1,6 @@
 import { ApiError } from '@/utils/api-error';
 import { TokenRepository } from '@/repositories/token.repository';
-import { TokenType } from '@/models/token-model';
+import { TokenType } from '@/models/token.model';
 import { TokenService } from '@/services/auth/token.service';
 import { logger } from '@/config/logger';
 

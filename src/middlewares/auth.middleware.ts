@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiError } from '@/utils/api-error';
-import { TokenType } from '@/models/token-model';
-import { DBUser } from '@/models/user-model';
+import { TokenType } from '@/models/token.model';
+import { DBUser } from '@/models/user.model';
 import { UserRepository } from '@/repositories/user.repository';
 import { TokenService } from '@/services/auth/token.service';
 import { logger } from '@/config/logger';

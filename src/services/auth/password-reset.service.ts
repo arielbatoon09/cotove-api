@@ -2,7 +2,7 @@ import { ApiError } from '@/utils/api-error';
 import { UserRepository } from '@/repositories/user.repository';
 import { TokenRepository } from '@/repositories/token.repository';
 import { TokenService } from '@/services/auth/token.service';
-import { TokenType, isTokenExpired } from '@/models/token-model';
+import { TokenType, isTokenExpired } from '@/models/token.model';
 import { hashPassword } from '@/utils/hash';
 
 export class PasswordResetService {

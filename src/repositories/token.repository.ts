@@ -1,7 +1,7 @@
 import { db } from '@/config/database';
 import { tokens } from '@/database/schema/token.schema';
 import { eq, and, or, lt, isNull } from 'drizzle-orm';
-import { DBToken, TokenType, CreateTokenInput } from '@/models/token-model';
+import { DBToken, TokenType, CreateTokenInput } from '@/models/token.model';
 
 export class TokenRepository {
   async findByToken(token: string): Promise<DBToken | null> {

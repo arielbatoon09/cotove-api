@@ -2,7 +2,7 @@ import { ApiError } from '@/utils/api-error';
 import { verifyPassword } from '@/utils/hash';
 import { UserRepository } from '@/repositories/user.repository';
 import { TokenRepository } from '@/repositories/token.repository';
-import { TokenType } from '@/models/token-model';
+import { TokenType } from '@/models/token.model';
 import { TokenService } from '@/services/auth/token.service';
 
 interface LoginInput {

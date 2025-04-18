@@ -1,12 +1,12 @@
 import { ApiError } from '@/utils/api-error';
 import { UserRepository } from '@/repositories/user.repository';
 import { TokenRepository } from '@/repositories/token.repository';
-import { TokenType } from '@/models/token-model';
-import { SafeUser } from '@/models/user-model';
+import { TokenType } from '@/models/token.model';
+import { SafeUser } from '@/models/user.model';
 import { hashPassword } from '@/utils/hash';
 import { logger } from '@/config/logger';
 import { TokenService } from '@/services/auth/token.service';
-import { userCreateSchema } from '@/models/user-model';
+import { userCreateSchema } from '@/models/user.model';
 import { ZodError } from 'zod';
 
 export class SignupService {
@@ -48,8 +48,6 @@ export class SignupService {
       password: hashedPassword, 
       name,
       isActive: true,
-      lastLogin: null,
-      verifiedAt: null
     });
     
     if (!newUser?.id || !newUser?.email) {

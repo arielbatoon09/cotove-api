@@ -1,7 +1,7 @@
 import { ApiError } from '@/utils/api-error';
 import { TokenRepository } from '@/repositories/token.repository';
 import { UserRepository } from '@/repositories/user.repository';
-import { TokenType, isTokenExpired } from '@/models/token-model';
+import { TokenType, isTokenExpired } from '@/models/token.model';
 import { TokenService } from '@/services/auth/token.service';
 import { logger } from '@/config/logger';
 
