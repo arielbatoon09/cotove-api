@@ -1,5 +1,4 @@
 import { Request, Response, RequestHandler } from 'express';
-import { ApiError } from '@/utils/api-error';
 import { asyncHandler } from '@/middlewares/error-handler';
 import { successHandler } from '@/middlewares/success-handler';
 import { authServices } from '@/services/auth';
@@ -49,9 +48,6 @@ export class AuthController {
   // Refresh Token Handler
   refreshToken: RequestHandler = asyncHandler(async (req: Request, res: Response) => {
     const { refreshToken } = req.body;
-    if (!refreshToken) {
-      throw new ApiError(401, 'Refresh token is missing');
-    }
     const result = await authServices.refreshTokenService.execute(refreshToken);
 
     return successHandler({
