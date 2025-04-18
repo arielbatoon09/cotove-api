@@ -24,32 +24,18 @@ export const tokenSchema = z.object({
   updatedAt: z.date()
 });
 
-export const createTokenSchema = z.object({
-  userId: z.string().uuid('Invalid user ID'),
-  token: z.string().min(1, 'Token is required'),
-  type: z.nativeEnum(TokenType, {
-    errorMap: () => ({ message: 'Invalid token type' })
-  }),
-  expiresAt: z.date(),
-  blacklisted: z.boolean().optional().default(false)
+export const tokenCreateSchema = tokenSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
 });
 
-export const verifyTokenSchema = z.object({
-  token: z.string().min(1, 'Token is required'),
-  type: z.nativeEnum(TokenType, {
-    errorMap: () => ({ message: 'Invalid token type' })
-  })
-});
-
-export const refreshTokenSchema = z.object({
-  refreshToken: z.string().min(1, 'Refresh token is required')
-});
+export const tokenUpdateSchema = tokenCreateSchema.partial();
 
 // TypeScript types derived from schemas
 export type Token = z.infer<typeof tokenSchema>;
-export type CreateTokenInput = z.infer<typeof createTokenSchema>;
-export type VerifyTokenInput = z.infer<typeof verifyTokenSchema>;
-export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
+export type CreateTokenInput = z.infer<typeof tokenCreateSchema>;
+export type UpdateTokenInput = z.infer<typeof tokenUpdateSchema>;
 
 // Database types from schema
 export type DBToken = InferSelectModel<typeof tokens>;

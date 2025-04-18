@@ -1,6 +1,7 @@
 import { pgTable, varchar, timestamp, boolean, index, uuid } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { tokens } from './token.schema';
+import { stores } from './store.schema';
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -23,5 +24,6 @@ export const users = pgTable('users', {
 
 // Relations
 export const userRelations = relations(users, ({ many }) => ({
-  tokens: many(tokens)
+  tokens: many(tokens),
+  stores: many(stores)
 }));
